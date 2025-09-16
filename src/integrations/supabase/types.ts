@@ -14,7 +14,400 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_routines: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          description: string | null
+          estimated_duration_minutes: number | null
+          id: string
+          name: string
+          routine_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          name: string
+          routine_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          name?: string
+          routine_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_routines_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "workout_routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercises: {
+        Row: {
+          created_at: string
+          description: string | null
+          equipment: string | null
+          exercise_type: Database["public"]["Enums"]["exercise_type"]
+          id: string
+          image_url: string | null
+          instructions: string[] | null
+          muscle_group: Database["public"]["Enums"]["muscle_group"]
+          name: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          equipment?: string | null
+          exercise_type: Database["public"]["Enums"]["exercise_type"]
+          id?: string
+          image_url?: string | null
+          instructions?: string[] | null
+          muscle_group: Database["public"]["Enums"]["muscle_group"]
+          name: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          equipment?: string | null
+          exercise_type?: Database["public"]["Enums"]["exercise_type"]
+          id?: string
+          image_url?: string | null
+          instructions?: string[] | null
+          muscle_group?: Database["public"]["Enums"]["muscle_group"]
+          name?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      fitness_goals: {
+        Row: {
+          created_at: string
+          current_value: number | null
+          description: string | null
+          goal_type: Database["public"]["Enums"]["goal_type"]
+          id: string
+          status: Database["public"]["Enums"]["goal_status"]
+          target_date: string | null
+          target_value: number | null
+          title: string
+          unit: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          goal_type: Database["public"]["Enums"]["goal_type"]
+          id?: string
+          status?: Database["public"]["Enums"]["goal_status"]
+          target_date?: string | null
+          target_value?: number | null
+          title: string
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          goal_type?: Database["public"]["Enums"]["goal_type"]
+          id?: string
+          status?: Database["public"]["Enums"]["goal_status"]
+          target_date?: string | null
+          target_value?: number | null
+          title?: string
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          activity_level: string | null
+          age: number | null
+          avatar_url: string | null
+          bmi: number | null
+          created_at: string
+          full_name: string | null
+          gender: string | null
+          height_cm: number | null
+          id: string
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          activity_level?: string | null
+          age?: number | null
+          avatar_url?: string | null
+          bmi?: number | null
+          created_at?: string
+          full_name?: string | null
+          gender?: string | null
+          height_cm?: number | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          activity_level?: string | null
+          age?: number | null
+          avatar_url?: string | null
+          bmi?: number | null
+          created_at?: string
+          full_name?: string | null
+          gender?: string | null
+          height_cm?: number | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      routine_exercises: {
+        Row: {
+          created_at: string
+          daily_routine_id: string
+          distance_meters: number | null
+          duration_seconds: number | null
+          exercise_id: string
+          id: string
+          notes: string | null
+          order_index: number
+          reps: number | null
+          rest_seconds: number | null
+          sets: number
+          weight_kg: number | null
+        }
+        Insert: {
+          created_at?: string
+          daily_routine_id: string
+          distance_meters?: number | null
+          duration_seconds?: number | null
+          exercise_id: string
+          id?: string
+          notes?: string | null
+          order_index: number
+          reps?: number | null
+          rest_seconds?: number | null
+          sets?: number
+          weight_kg?: number | null
+        }
+        Update: {
+          created_at?: string
+          daily_routine_id?: string
+          distance_meters?: number | null
+          duration_seconds?: number | null
+          exercise_id?: string
+          id?: string
+          notes?: string | null
+          order_index?: number
+          reps?: number | null
+          rest_seconds?: number | null
+          sets?: number
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routine_exercises_daily_routine_id_fkey"
+            columns: ["daily_routine_id"]
+            isOneToOne: false
+            referencedRelation: "daily_routines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routine_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_exercises: {
+        Row: {
+          actual_distance_meters: number | null
+          actual_duration_seconds: number | null
+          actual_reps: number[] | null
+          actual_weight_kg: number[] | null
+          completed_at: string | null
+          created_at: string
+          exercise_id: string
+          id: string
+          notes: string | null
+          order_index: number
+          rest_seconds: number | null
+          sets_completed: number
+          target_distance_meters: number | null
+          target_duration_seconds: number | null
+          target_reps: number | null
+          target_sets: number | null
+          target_weight_kg: number | null
+          workout_id: string
+        }
+        Insert: {
+          actual_distance_meters?: number | null
+          actual_duration_seconds?: number | null
+          actual_reps?: number[] | null
+          actual_weight_kg?: number[] | null
+          completed_at?: string | null
+          created_at?: string
+          exercise_id: string
+          id?: string
+          notes?: string | null
+          order_index: number
+          rest_seconds?: number | null
+          sets_completed?: number
+          target_distance_meters?: number | null
+          target_duration_seconds?: number | null
+          target_reps?: number | null
+          target_sets?: number | null
+          target_weight_kg?: number | null
+          workout_id: string
+        }
+        Update: {
+          actual_distance_meters?: number | null
+          actual_duration_seconds?: number | null
+          actual_reps?: number[] | null
+          actual_weight_kg?: number[] | null
+          completed_at?: string | null
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          notes?: string | null
+          order_index?: number
+          rest_seconds?: number | null
+          sets_completed?: number
+          target_distance_meters?: number | null
+          target_duration_seconds?: number | null
+          target_reps?: number | null
+          target_sets?: number | null
+          target_weight_kg?: number | null
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercises_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_routines: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workouts: {
+        Row: {
+          calories_burned: number | null
+          completed_at: string | null
+          created_at: string
+          daily_routine_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          scheduled_date: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["workout_status"]
+          total_duration_minutes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calories_burned?: number | null
+          completed_at?: string | null
+          created_at?: string
+          daily_routine_id?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          scheduled_date?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["workout_status"]
+          total_duration_minutes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calories_burned?: number | null
+          completed_at?: string | null
+          created_at?: string
+          daily_routine_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          scheduled_date?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["workout_status"]
+          total_duration_minutes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workouts_daily_routine_id_fkey"
+            columns: ["daily_routine_id"]
+            isOneToOne: false
+            referencedRelation: "daily_routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +416,30 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      exercise_type:
+        | "weights"
+        | "bodyweight"
+        | "cardio"
+        | "flexibility"
+        | "other"
+      goal_status: "active" | "completed" | "paused" | "cancelled"
+      goal_type:
+        | "weight_loss"
+        | "weight_gain"
+        | "muscle_building"
+        | "strength"
+        | "endurance"
+        | "general_fitness"
+      muscle_group:
+        | "chest"
+        | "back"
+        | "shoulders"
+        | "arms"
+        | "core"
+        | "legs"
+        | "full_body"
+        | "cardio"
+      workout_status: "planned" | "in_progress" | "completed" | "skipped"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +566,34 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      exercise_type: [
+        "weights",
+        "bodyweight",
+        "cardio",
+        "flexibility",
+        "other",
+      ],
+      goal_status: ["active", "completed", "paused", "cancelled"],
+      goal_type: [
+        "weight_loss",
+        "weight_gain",
+        "muscle_building",
+        "strength",
+        "endurance",
+        "general_fitness",
+      ],
+      muscle_group: [
+        "chest",
+        "back",
+        "shoulders",
+        "arms",
+        "core",
+        "legs",
+        "full_body",
+        "cardio",
+      ],
+      workout_status: ["planned", "in_progress", "completed", "skipped"],
+    },
   },
 } as const
