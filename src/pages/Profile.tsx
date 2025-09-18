@@ -52,33 +52,6 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* Auth Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Account Status</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Sync status:</span>
-              <Badge variant="destructive" className="text-xs">
-                <X className="w-3 h-3 mr-1" />
-                Must be signed in
-              </Badge>
-            </div>
-            
-            <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start" disabled>
-                <div className="w-5 h-5 mr-3 bg-muted rounded"></div>
-                Sign in with Google
-              </Button>
-              
-              <Button variant="outline" className="w-full justify-start" disabled>
-                <div className="w-5 h-5 mr-3 bg-muted rounded"></div>
-                Sign in with Apple
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-4">
@@ -101,23 +74,6 @@ const Profile = () => {
           </Card>
         </div>
 
-        {/* Upgrade Section */}
-        <Card className="bg-gradient-primary text-primary-foreground">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <div className="text-4xl">🏋️</div>
-              <div className="space-y-2">
-                <h3 className="font-semibold">Upgrade to PRO</h3>
-                <p className="text-sm opacity-90">
-                  Unlock advanced features and detailed analytics
-                </p>
-              </div>
-              <Button variant="secondary" className="w-full">
-                Upgrade to PRO
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Sign Out */}
         <div className="pt-4">

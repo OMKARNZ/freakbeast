@@ -12,6 +12,7 @@ import Progress from "@/pages/Progress";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import ExerciseCatalog from "@/pages/ExerciseCatalog";
+import RoutineDetails from "@/pages/RoutineDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,16 @@ const App = () => (
               <Workouts />
             </ProtectedRoute>
           } />
+          <Route path="/workouts" element={
+            <ProtectedRoute>
+              <Workouts />
+            </ProtectedRoute>
+          } />
+          <Route path="/routines/:id" element={
+            <ProtectedRoute>
+              <RoutineDetails />
+            </ProtectedRoute>
+          } />
           <Route path="/goals" element={
             <ProtectedRoute>
               <Goals />
@@ -72,7 +83,11 @@ const App = () => (
               <ExerciseCatalog />
             </ProtectedRoute>
           } />
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={
+            <ProtectedRoute>
+              <NotFound />
+            </ProtectedRoute>
+          } />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
