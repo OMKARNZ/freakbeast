@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const WorkoutSession = () => {
-  const { routineId } = useParams();
+  const { routineId, workoutId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -24,33 +24,57 @@ const WorkoutSession = () => {
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    if (routineId && user) {
-      fetchWorkoutData();
+    if (user) {
+      if (workoutId) {
+        fetchExistingWorkout();
+      } else if (routineId) {
+        fetchWorkoutData();
+      }
     }
-  }, [routineId, user]);
+  }, [routineId, workoutId, user]);
 
-  const fetchWorkoutData = async () => {
-    if (!user || !routineId) return;
+  const fetchExistingWorkout = async () => {
+    if (!user || !workoutId) return;
 
-    // Create a new workout session
     const { data: workoutData, error: workoutError } = await supabase
       .from('workouts')
-      .insert([{
-        user_id: user.id,
-        daily_routine_id: routineId,
-        name: 'Workout Session',
-        status: 'in_progress',
-        started_at: new Date().toISOString()
-      }])
-      .select()
+      .select('*')
+      .eq('id', workoutId)
+      .eq('user_id', user.id)
       .single();
 
     if (workoutError) {
-      console.error('Error creating workout:', workoutError);
+      console.error('Error fetching workout:', workoutError);
+      navigate('/workouts');
       return;
     }
 
     setWorkout(workoutData);
+    setWorkoutStarted(workoutData.status === 'in_progress');
+    if (workoutData.started_at) {
+      setStartTime(new Date(workoutData.started_at));
+    }
+
+    // Fetch workout exercises
+    const { data: exercisesData, error: exercisesError } = await supabase
+      .from('workout_exercises')
+      .select(`
+        *,
+        exercises (*)
+      `)
+      .eq('workout_id', workoutId)
+      .order('order_index');
+
+    if (exercisesError) {
+      console.error('Error fetching workout exercises:', exercisesError);
+      return;
+    }
+
+    setExercises(exercisesData || []);
+  };
+
+  const fetchWorkoutData = async () => {
+    if (!user || !routineId) return;
 
     // Fetch routine exercises
     const { data: exercisesData, error: exercisesError } = await supabase
@@ -71,8 +95,36 @@ const WorkoutSession = () => {
   };
 
   const startWorkout = () => {
+    if (!routineId) return;
+    
     setWorkoutStarted(true);
     setStartTime(new Date());
+    
+    // Create workout session in database
+    createWorkoutSession();
+  };
+
+  const createWorkoutSession = async () => {
+    if (!user || !routineId) return;
+
+    const { data: workoutData, error: workoutError } = await supabase
+      .from('workouts')
+      .insert([{
+        user_id: user.id,
+        daily_routine_id: routineId,
+        name: 'Workout Session',
+        status: 'in_progress',
+        started_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (workoutError) {
+      console.error('Error creating workout:', workoutError);
+      return;
+    }
+
+    setWorkout(workoutData);
   };
 
   const completeExercise = (exerciseId: string) => {
@@ -117,12 +169,12 @@ const WorkoutSession = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-border space-y-2 sm:space-y-0">
         <div className="flex items-center space-x-3">
           <Button variant="ghost" size="icon" onClick={() => navigate('/workouts')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-bold">Workout Session</h1>
+          <h1 className="text-lg sm:text-xl font-bold">Workout Session</h1>
         </div>
         <Badge variant={workoutStarted ? 'default' : 'secondary'}>
           {workoutStarted ? 'In Progress' : 'Ready'}
@@ -139,7 +191,7 @@ const WorkoutSession = () => {
                 You have {exercises.length} exercises in this routine
               </p>
             </div>
-            <Button onClick={startWorkout} size="lg" className="w-full max-w-xs">
+            <Button onClick={startWorkout} size="lg" className="w-full max-w-xs mx-auto">
               <Play className="w-4 h-4 mr-2" />
               Start Workout
             </Button>
@@ -181,7 +233,7 @@ const WorkoutSession = () => {
                   <CardTitle>{currentExercise.exercises.name}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Sets:</span>
                       <span className="ml-2 font-medium">{currentExercise.sets}</span>
@@ -241,7 +293,7 @@ const WorkoutSession = () => {
 
             {/* Finish Workout */}
             {completedExercises.size === exercises.length && (
-              <Button onClick={finishWorkout} size="lg" className="w-full">
+              <Button onClick={finishWorkout} size="lg" className="w-full max-w-md mx-auto">
                 <Check className="w-4 h-4 mr-2" />
                 Finish Workout
               </Button>

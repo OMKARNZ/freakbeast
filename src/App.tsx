@@ -64,6 +64,11 @@ const App = () => (
               <WorkoutSession />
             </ProtectedRoute>
           } />
+          <Route path="/workout-session/workout/:workoutId" element={
+            <ProtectedRoute>
+              <WorkoutSession />
+            </ProtectedRoute>
+          } />
           <Route path="/goals" element={
             <ProtectedRoute>
               <Goals />
