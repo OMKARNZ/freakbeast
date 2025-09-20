@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Target, TrendingUp, Calendar, Trophy } from 'lucide-react';
+import { Plus, Target, TrendingUp, Calendar, Trophy, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,9 @@ const Goals = () => {
   const { toast } = useToast();
   const [goals, setGoals] = useState([]);
   const [showNewGoalDialog, setShowNewGoalDialog] = useState(false);
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<any>(null);
+  const [progressValue, setProgressValue] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -51,17 +54,20 @@ const Goals = () => {
     e.preventDefault();
     if (!user) return;
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('fitness_goals')
       .insert([{
         ...formData,
         user_id: user.id,
-        goal_type: formData.goal_type as any,
-        target_value: formData.target_value ? parseFloat(formData.target_value) : null,
-        target_date: formData.target_date || null
-      }]);
+        target_value: parseFloat(formData.target_value),
+        current_value: 0,
+        goal_type: formData.goal_type as any
+      }])
+      .select()
+      .single();
 
     if (error) {
+      console.error('Error creating goal:', error);
       toast({
         title: "Error",
         description: "Failed to create goal. Please try again.",
@@ -87,14 +93,106 @@ const Goals = () => {
     fetchGoals();
   };
 
+  const handleStartGoal = async (goalId: string) => {
+    const { error } = await supabase
+      .from('fitness_goals')
+      .update({ status: 'active' })
+      .eq('id', goalId)
+      .eq('user_id', user?.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start goal. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Goal Started!",
+      description: "Your goal is now active. Good luck!",
+    });
+    
+    fetchGoals();
+  };
+
+  const handleUpdateProgress = (goalId: string) => {
+    const goal = goals.find((g: any) => g.id === goalId);
+    setSelectedGoal(goal);
+    setProgressValue(goal?.current_value?.toString() || '0');
+    setShowUpdateDialog(true);
+  };
+
+  const handleSaveProgress = async () => {
+    if (!selectedGoal || !progressValue) return;
+
+    const { error } = await supabase
+      .from('fitness_goals')
+      .update({ 
+        current_value: parseFloat(progressValue),
+        status: parseFloat(progressValue) >= selectedGoal.target_value ? 'completed' : 'active'
+      })
+      .eq('id', selectedGoal.id)
+      .eq('user_id', user?.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update progress. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Progress Updated!",
+      description: "Your goal progress has been updated successfully.",
+    });
+    
+    setShowUpdateDialog(false);
+    setSelectedGoal(null);
+    setProgressValue('');
+    fetchGoals();
+  };
+
+  const handleCompleteGoal = async (goalId: string) => {
+    const goal = goals.find((g: any) => g.id === goalId);
+    
+    const { error } = await supabase
+      .from('fitness_goals')
+      .update({ 
+        status: 'completed',
+        current_value: goal?.target_value || 0
+      })
+      .eq('id', goalId)
+      .eq('user_id', user?.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to complete goal. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Congratulations! 🎉",
+      description: "You've completed your goal! Great achievement!",
+    });
+    
+    fetchGoals();
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
-        <h1 className="text-xl font-bold">Fitness Goals</h1>
+        <h1 className="text-2xl font-bold">Fitness Goals</h1>
         <Dialog open={showNewGoalDialog} onOpenChange={setShowNewGoalDialog}>
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button>
               <Plus className="w-4 h-4 mr-2" />
               New Goal
             </Button>
@@ -105,59 +203,62 @@ const Goals = () => {
             </DialogHeader>
             <form onSubmit={handleCreateGoal} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Goal Title</Label>
+                <Label htmlFor="goal-title">Goal Title</Label>
                 <Input
-                  id="title"
+                  id="goal-title"
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  placeholder="e.g., Lose 10 kg"
+                  placeholder="e.g., Lose 10kg weight"
                   required
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="goal_type">Goal Type</Label>
+                <Label htmlFor="goal-type">Goal Type</Label>
                 <Select value={formData.goal_type} onValueChange={(value) => setFormData({...formData, goal_type: value})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select goal type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="weight_loss">Weight Loss</SelectItem>
-                    <SelectItem value="weight_gain">Weight Gain</SelectItem>
-                    <SelectItem value="muscle_building">Muscle Building</SelectItem>
-                    <SelectItem value="strength">Strength</SelectItem>
+                    <SelectItem value="muscle_gain">Muscle Gain</SelectItem>
                     <SelectItem value="endurance">Endurance</SelectItem>
-                    <SelectItem value="general_fitness">General Fitness</SelectItem>
+                    <SelectItem value="strength">Strength</SelectItem>
+                    <SelectItem value="flexibility">Flexibility</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="target_value">Target Value</Label>
+                  <Label htmlFor="target-value">Target Value</Label>
                   <Input
-                    id="target_value"
+                    id="target-value"
                     type="number"
                     value={formData.target_value}
                     onChange={(e) => setFormData({...formData, target_value: e.target.value})}
                     placeholder="10"
+                    required
                   />
                 </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="unit">Unit</Label>
                   <Input
                     id="unit"
                     value={formData.unit}
                     onChange={(e) => setFormData({...formData, unit: e.target.value})}
-                    placeholder="kg, lbs, reps"
+                    placeholder="kg, lbs, km, etc."
+                    required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="target_date">Target Date</Label>
+                <Label htmlFor="target-date">Target Date</Label>
                 <Input
-                  id="target_date"
+                  id="target-date"
                   type="date"
                   value={formData.target_date}
                   onChange={(e) => setFormData({...formData, target_date: e.target.value})}
@@ -165,12 +266,12 @@ const Goals = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="goal-description">Description</Label>
                 <Textarea
-                  id="description"
+                  id="goal-description"
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="Describe your goal..."
+                  placeholder="Describe your goal and motivation..."
                 />
               </div>
 
@@ -193,75 +294,251 @@ const Goals = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-4 space-y-6">
+      <div className="flex-1 p-4">
         {goals.length === 0 ? (
           /* Empty State */
           <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
-            <div className="relative">
-              <div className="w-24 h-24 bg-gradient-card rounded-full flex items-center justify-center shadow-card">
-                <Target className="w-12 h-12 text-primary" />
+            <div className="relative mx-auto w-48 h-32">
+              {/* Target illustration */}
+              <div className="absolute inset-0 bg-gradient-card rounded-full shadow-card flex items-center justify-center">
+                <Target className="w-16 h-16 text-primary" />
               </div>
-              <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-primary-foreground" />
+              
+              {/* Trophy illustration */}
+              <div className="absolute -top-2 -right-2 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-button">
+                <Trophy className="w-6 h-6 text-primary-foreground" />
               </div>
             </div>
-            
+
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Set Your First Goal</h2>
-              <p className="text-muted-foreground text-sm max-w-sm">
-                Define clear fitness objectives to stay motivated and track your progress
+              <h2 className="text-lg font-semibold">No goals yet</h2>
+              <p className="text-muted-foreground text-sm">
+                Set your first fitness goal to start tracking your progress
               </p>
             </div>
 
-            <Button className="w-full max-w-xs" onClick={() => setShowNewGoalDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Goal
-            </Button>
+            <Dialog open={showNewGoalDialog} onOpenChange={setShowNewGoalDialog}>
+              <DialogTrigger asChild>
+                <Button className="w-full max-w-xs">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create your first goal
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create New Goal</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreateGoal} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Goal Title</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      placeholder="e.g., Lose 10 kg"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="goal_type">Goal Type</Label>
+                    <Select value={formData.goal_type} onValueChange={(value) => setFormData({...formData, goal_type: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select goal type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weight_loss">Weight Loss</SelectItem>
+                        <SelectItem value="weight_gain">Weight Gain</SelectItem>
+                        <SelectItem value="muscle_building">Muscle Building</SelectItem>
+                        <SelectItem value="strength">Strength</SelectItem>
+                        <SelectItem value="endurance">Endurance</SelectItem>
+                        <SelectItem value="general_fitness">General Fitness</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="target_value">Target Value</Label>
+                      <Input
+                        id="target_value"
+                        type="number"
+                        value={formData.target_value}
+                        onChange={(e) => setFormData({...formData, target_value: e.target.value})}
+                        placeholder="10"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="unit">Unit</Label>
+                      <Input
+                        id="unit"
+                        value={formData.unit}
+                        onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                        placeholder="kg, lbs, reps"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="target_date">Target Date</Label>
+                    <Input
+                      id="target_date"
+                      type="date"
+                      value={formData.target_date}
+                      onChange={(e) => setFormData({...formData, target_date: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      placeholder="Describe your goal..."
+                    />
+                  </div>
+
+                  <div className="flex space-x-2 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => setShowNewGoalDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" className="flex-1">
+                      Create Goal
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         ) : (
           /* Goals List */
           <div className="space-y-4">
             {goals.map((goal: any) => (
-              <Card key={goal.id}>
+              <Card key={goal.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{goal.title}</CardTitle>
-                    <Badge variant={goal.status === 'active' ? 'default' : goal.status === 'completed' ? 'secondary' : 'outline'}>
-                      {goal.status}
-                    </Badge>
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">{goal.title}</CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={
+                          goal.status === 'completed' ? 'default' : 
+                          goal.status === 'active' ? 'secondary' : 'outline'
+                        }>
+                          {goal.status}
+                        </Badge>
+                        {goal.target_date && (
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            {new Date(goal.target_date).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium">
+                        {goal.current_value}/{goal.target_value} {goal.unit}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {Math.round((goal.current_value / goal.target_value) * 100)}% complete
+                      </div>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {goal.target_value && (
-                      <>
-                        <div className="flex justify-between text-sm">
-                          <span>Progress</span>
-                          <span>{goal.current_value || 0}/{goal.target_value} {goal.unit}</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div 
-                            className="bg-primary h-2 rounded-full transition-all" 
-                            style={{ width: `${Math.min(((goal.current_value || 0) / goal.target_value) * 100, 100)}%` }}
-                          ></div>
-                        </div>
-                      </>
-                    )}
-                    {goal.target_date && (
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        Target: {new Date(goal.target_date).toLocaleDateString()}
-                      </div>
-                    )}
+                  <div className="space-y-4">
                     {goal.description && (
                       <p className="text-sm text-muted-foreground">{goal.description}</p>
                     )}
+                    <div className="flex items-center space-x-2">
+                      <div className="flex-1 bg-muted rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all"
+                          style={{ width: `${Math.min((goal.current_value / goal.target_value) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleStartGoal(goal.id)}
+                        disabled={goal.status === 'completed'}
+                      >
+                        <Play className="w-4 h-4 mr-1" />
+                        {goal.status === 'completed' ? 'Completed' : 'Start Goal'}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleUpdateProgress(goal.id)}
+                        disabled={goal.status === 'completed'}
+                      >
+                        <TrendingUp className="w-4 h-4 mr-1" />
+                        Update Progress
+                      </Button>
+                      {goal.status !== 'completed' && (
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => handleCompleteGoal(goal.id)}
+                        >
+                          <Trophy className="w-4 h-4 mr-1" />
+                          Mark Done
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
+
+        {/* Update Progress Dialog */}
+        <Dialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Update Progress</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="progress-value">
+                  Current Progress ({selectedGoal?.unit})
+                </Label>
+                <Input
+                  id="progress-value"
+                  type="number"
+                  value={progressValue}
+                  onChange={(e) => setProgressValue(e.target.value)}
+                  placeholder="Enter current progress"
+                  max={selectedGoal?.target_value}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Target: {selectedGoal?.target_value} {selectedGoal?.unit}
+                </p>
+              </div>
+              <div className="flex space-x-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setShowUpdateDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveProgress} className="flex-1">
+                  Update
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

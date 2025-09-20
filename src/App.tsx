@@ -13,6 +13,7 @@ import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import ExerciseCatalog from "@/pages/ExerciseCatalog";
 import RoutineDetails from "@/pages/RoutineDetails";
+import WorkoutSession from "@/pages/WorkoutSession";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,11 @@ const App = () => (
           <Route path="/routines/:id" element={
             <ProtectedRoute>
               <RoutineDetails />
+            </ProtectedRoute>
+          } />
+          <Route path="/workout-session/:routineId" element={
+            <ProtectedRoute>
+              <WorkoutSession />
             </ProtectedRoute>
           } />
           <Route path="/goals" element={

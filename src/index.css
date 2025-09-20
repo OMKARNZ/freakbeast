@@ -2,59 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fitness Tracker Design System - Dark theme with vibrant green accents */
+/* Fitness Tracker Design System - Black/Grey/White theme */
 
 @layer base {
   :root {
-    /* Dark theme colors */
-    --background: 218 23% 10%;
-    --foreground: 210 40% 98%;
+    /* Black/Grey/White theme colors */
+    --background: 0 0% 8%;
+    --foreground: 0 0% 98%;
 
-    --card: 218 20% 12%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 218 20% 12%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 98%;
 
-    /* Vibrant green primary inspired by screenshots */
-    --primary: 150 100% 42%;
-    --primary-foreground: 218 23% 10%;
+    /* White primary for clean contrast */
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 8%;
 
-    --secondary: 218 15% 18%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 218 15% 15%;
-    --muted-foreground: 217 10% 65%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 218 15% 18%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 75% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 218 15% 20%;
-    --input: 218 15% 18%;
-    --ring: 150 100% 42%;
+    --border: 0 0% 20%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 98%;
 
     --radius: 0.75rem;
 
-    /* Fitness-specific colors */
-    --success: 150 100% 42%;
-    --success-foreground: 218 23% 10%;
+    /* Status colors */
+    --success: 120 100% 35%;
+    --success-foreground: 0 0% 98%;
     
     --warning: 45 100% 60%;
-    --warning-foreground: 218 23% 10%;
+    --warning-foreground: 0 0% 8%;
     
     --info: 200 100% 60%;
-    --info-foreground: 218 23% 10%;
+    --info-foreground: 0 0% 8%;
 
     /* Gradients for enhanced visuals */
-    --gradient-primary: linear-gradient(135deg, hsl(150 100% 42%), hsl(160 100% 45%));
-    --gradient-card: linear-gradient(145deg, hsl(218 20% 12%), hsl(218 15% 15%));
+    --gradient-primary: linear-gradient(135deg, hsl(0 0% 98%), hsl(0 0% 85%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 12%), hsl(0 0% 15%));
     
     /* Shadows for depth */
-    --shadow-card: 0 4px 12px hsl(218 50% 5% / 0.4);
-    --shadow-button: 0 2px 8px hsl(150 100% 42% / 0.3);
+    --shadow-card: 0 4px 12px hsl(0 0% 5% / 0.4);
+    --shadow-button: 0 2px 8px hsl(0 0% 98% / 0.1);
     
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

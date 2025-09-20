@@ -90,6 +90,111 @@ const Workouts = () => {
     navigate('/exercises');
   };
 
+  const handleRename = () => {
+    toast({
+      title: "Rename Feature",
+      description: "Rename functionality would be implemented here",
+    });
+  };
+
+  const handleDuplicate = () => {
+    toast({
+      title: "Duplicate Feature",
+      description: "Duplicate functionality would be implemented here",
+    });
+  };
+
+  const handleShare = () => {
+    toast({
+      title: "Share Feature",
+      description: "Share functionality would be implemented here",
+    });
+  };
+
+  const handleDeleteAll = async () => {
+    if (!user) return;
+    
+    const { error } = await supabase
+      .from('workout_routines')
+      .delete()
+      .eq('user_id', user.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete routines. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "All routines deleted successfully!",
+    });
+    
+    fetchRoutines();
+  };
+
+  const handleManageRoutines = () => {
+    toast({
+      title: "Manage Routines",
+      description: "Routine management interface would open here",
+    });
+  };
+
+  const handleReminders = () => {
+    toast({
+      title: "Reminders",
+      description: "Reminder settings would be configured here",
+    });
+  };
+
+  const handleRenameRoutine = async (routineId: string) => {
+    toast({
+      title: "Rename Routine",
+      description: "Rename functionality for individual routine would be implemented here",
+    });
+  };
+
+  const handleDuplicateRoutine = async (routineId: string) => {
+    toast({
+      title: "Duplicate Routine",
+      description: "Duplicate functionality for individual routine would be implemented here",
+    });
+  };
+
+  const handleShareRoutine = async (routineId: string) => {
+    toast({
+      title: "Share Routine",
+      description: "Share functionality for individual routine would be implemented here",
+    });
+  };
+
+  const handleDeleteRoutine = async (routineId: string) => {
+    const { error } = await supabase
+      .from('workout_routines')
+      .delete()
+      .eq('id', routineId)
+      .eq('user_id', user?.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete routine. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Routine deleted successfully!",
+    });
+    
+    fetchRoutines();
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
@@ -104,22 +209,22 @@ const Workouts = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleRename()}>
               <span>Rename</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleDuplicate()}>
               <span>Duplicate</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleShare()}>
               <span>Share</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
-              <span>Delete</span>
+            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteAll()}>
+              <span>Delete All</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleManageRoutines()}>
               <span>Manage Routines</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleReminders()}>
               <span>Reminders</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -245,10 +350,10 @@ const Workouts = () => {
           /* Routines List */
           <div className="space-y-4">
             {routines.map((routine: any) => (
-              <Card key={routine.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate(`/routines/${routine.id}`)}>
+              <Card key={routine.id} className="cursor-pointer hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div className="space-y-1">
+                    <div className="space-y-1" onClick={() => navigate(`/routines/${routine.id}`)}>
                       <CardTitle className="text-lg">{routine.name}</CardTitle>
                       <div className="flex items-center space-x-2">
                         <Badge variant={routine.is_active ? 'default' : 'secondary'}>
@@ -260,13 +365,47 @@ const Workouts = () => {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/workout-session/${routine.id}`);
+                        }}
+                      >
+                        <Play className="w-4 h-4 mr-1" />
+                        Start
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleRenameRoutine(routine.id)}>
+                            <span>Rename</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDuplicateRoutine(routine.id)}>
+                            <span>Duplicate</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleShareRoutine(routine.id)}>
+                            <span>Share</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive" 
+                            onClick={() => handleDeleteRoutine(routine.id)}
+                          >
+                            <span>Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </CardHeader>
                 {routine.description && (
-                  <CardContent>
+                  <CardContent onClick={() => navigate(`/routines/${routine.id}`)}>
                     <p className="text-sm text-muted-foreground">{routine.description}</p>
                   </CardContent>
                 )}
