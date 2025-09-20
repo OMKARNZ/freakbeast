@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, MoreVertical, Play, MoreHorizontal, Calendar, Clock } from 'lucide-react';
+import { Plus, MoreVertical, Play, MoreHorizontal, Calendar, Clock, Edit, Copy, Share2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,7 +26,13 @@ const Workouts = () => {
   
   const [routines, setRoutines] = useState([]);
   const [showNewRoutineDialog, setShowNewRoutineDialog] = useState(false);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [selectedRoutine, setSelectedRoutine] = useState<any>(null);
   const [formData, setFormData] = useState({
+    name: '',
+    description: ''
+  });
+  const [renameData, setRenameData] = useState({
     name: '',
     description: ''
   });
@@ -90,25 +97,147 @@ const Workouts = () => {
     navigate('/exercises');
   };
 
-  const handleRename = () => {
-    toast({
-      title: "Rename Feature",
-      description: "Rename functionality would be implemented here",
+  const handleRename = (routine: any) => {
+    setSelectedRoutine(routine);
+    setRenameData({
+      name: routine.name,
+      description: routine.description || ''
     });
+    setShowRenameDialog(true);
   };
 
-  const handleDuplicate = () => {
+  const handleRenameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRoutine || !user) return;
+
+    const { error } = await supabase
+      .from('workout_routines')
+      .update({
+        name: renameData.name,
+        description: renameData.description
+      })
+      .eq('id', selectedRoutine.id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to rename routine. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
-      title: "Duplicate Feature",
-      description: "Duplicate functionality would be implemented here",
+      title: "Success",
+      description: "Routine renamed successfully!",
     });
+
+    setShowRenameDialog(false);
+    setSelectedRoutine(null);
+    setRenameData({ name: '', description: '' });
+    fetchRoutines();
   };
 
-  const handleShare = () => {
+  const handleDuplicate = async (routine: any) => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('workout_routines')
+      .insert([{
+        name: `${routine.name} (Copy)`,
+        description: routine.description,
+        user_id: user.id
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to duplicate routine. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Also duplicate daily routines and exercises
+    const { data: dailyRoutines } = await supabase
+      .from('daily_routines')
+      .select('*, routine_exercises(*)')
+      .eq('routine_id', routine.id);
+
+    if (dailyRoutines && dailyRoutines.length > 0) {
+      for (const dailyRoutine of dailyRoutines) {
+        const { data: newDailyRoutine, error: dailyError } = await supabase
+          .from('daily_routines')
+          .insert([{
+            routine_id: data.id,
+            day_of_week: dailyRoutine.day_of_week,
+            name: dailyRoutine.name,
+            description: dailyRoutine.description,
+            estimated_duration_minutes: dailyRoutine.estimated_duration_minutes
+          }])
+          .select()
+          .single();
+
+        if (!dailyError && newDailyRoutine && dailyRoutine.routine_exercises) {
+          const exercisesToInsert = dailyRoutine.routine_exercises.map((exercise: any) => ({
+            daily_routine_id: newDailyRoutine.id,
+            exercise_id: exercise.exercise_id,
+            order_index: exercise.order_index,
+            sets: exercise.sets,
+            reps: exercise.reps,
+            weight_kg: exercise.weight_kg,
+            duration_seconds: exercise.duration_seconds,
+            distance_meters: exercise.distance_meters,
+            rest_seconds: exercise.rest_seconds,
+            notes: exercise.notes
+          }));
+
+          await supabase
+            .from('routine_exercises')
+            .insert(exercisesToInsert);
+        }
+      }
+    }
+
     toast({
-      title: "Share Feature",
-      description: "Share functionality would be implemented here",
+      title: "Success",
+      description: "Routine duplicated successfully!",
     });
+
+    fetchRoutines();
+  };
+
+  const handleShare = async (routine: any) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${routine.name} - Workout Routine`,
+          text: routine.description || 'Check out this workout routine!',
+          url: window.location.href
+        });
+      } catch (error) {
+        // User cancelled sharing or sharing failed
+        console.log('Sharing cancelled or failed');
+      }
+    } else {
+      // Fallback: copy to clipboard
+      const shareText = `${routine.name}\n${routine.description || ''}\n\nShared from FitTracker`;
+      try {
+        await navigator.clipboard.writeText(shareText);
+        toast({
+          title: "Copied to clipboard",
+          description: "Routine details copied to clipboard for sharing!",
+        });
+      } catch (error) {
+        toast({
+          title: "Share",
+          description: "Share functionality is not available on this device.",
+        });
+      }
+    }
   };
 
   const handleDeleteAll = async () => {
@@ -150,27 +279,6 @@ const Workouts = () => {
     });
   };
 
-  const handleRenameRoutine = async (routineId: string) => {
-    toast({
-      title: "Rename Routine",
-      description: "Rename functionality for individual routine would be implemented here",
-    });
-  };
-
-  const handleDuplicateRoutine = async (routineId: string) => {
-    toast({
-      title: "Duplicate Routine",
-      description: "Duplicate functionality for individual routine would be implemented here",
-    });
-  };
-
-  const handleShareRoutine = async (routineId: string) => {
-    toast({
-      title: "Share Routine",
-      description: "Share functionality for individual routine would be implemented here",
-    });
-  };
-
   const handleDeleteRoutine = async (routineId: string) => {
     const { error } = await supabase
       .from('workout_routines')
@@ -208,25 +316,37 @@ const Workouts = () => {
               <MoreVertical className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleRename()}>
-              <span>Rename</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDuplicate()}>
-              <span>Duplicate</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleShare()}>
-              <span>Share</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteAll()}>
-              <span>Delete All</span>
-            </DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={() => handleManageRoutines()}>
+              <Edit className="w-4 h-4 mr-2" />
               <span>Manage Routines</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleReminders()}>
+              <Clock className="w-4 h-4 mr-2" />
               <span>Reminders</span>
             </DropdownMenuItem>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  <span className="text-destructive">Delete All</span>
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete All Routines</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete all your workout routines? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete All
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -277,7 +397,7 @@ const Workouts = () => {
                   Add your first routine
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-md mx-4">
                 <DialogHeader>
                   <DialogTitle>New Routine</DialogTitle>
                 </DialogHeader>
@@ -301,7 +421,7 @@ const Workouts = () => {
                       placeholder="Describe your routine..."
                     />
                   </div>
-                  <div className="flex space-x-2 pt-4">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
                     <Button 
                       type="button" 
                       variant="outline" 
@@ -352,10 +472,10 @@ const Workouts = () => {
             {routines.map((routine: any) => (
               <Card key={routine.id} className="cursor-pointer hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1" onClick={() => navigate(`/routines/${routine.id}`)}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+                    <div className="space-y-1 flex-1" onClick={() => navigate(`/routines/${routine.id}`)}>
                       <CardTitle className="text-lg">{routine.name}</CardTitle>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={routine.is_active ? 'default' : 'secondary'}>
                           {routine.is_active ? 'Active' : 'Inactive'}
                         </Badge>
@@ -371,11 +491,12 @@ const Workouts = () => {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/workout-session/${routine.id}`);
+                          navigate(`/routines/${routine.id}`);
                         }}
+                        className="flex-shrink-0"
                       >
                         <Play className="w-4 h-4 mr-1" />
-                        Start
+                        <span className="hidden sm:inline">Start</span>
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -383,22 +504,44 @@ const Workouts = () => {
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleRenameRoutine(routine.id)}>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => handleRename(routine)}>
+                            <Edit className="w-4 h-4 mr-2" />
                             <span>Rename</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDuplicateRoutine(routine.id)}>
+                          <DropdownMenuItem onClick={() => handleDuplicate(routine)}>
+                            <Copy className="w-4 h-4 mr-2" />
                             <span>Duplicate</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleShareRoutine(routine.id)}>
+                          <DropdownMenuItem onClick={() => handleShare(routine)}>
+                            <Share2 className="w-4 h-4 mr-2" />
                             <span>Share</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-destructive" 
-                            onClick={() => handleDeleteRoutine(routine.id)}
-                          >
-                            <span>Delete</span>
-                          </DropdownMenuItem>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                <span className="text-destructive">Delete</span>
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Routine</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{routine.name}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDeleteRoutine(routine.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -424,7 +567,7 @@ const Workouts = () => {
                   </CardContent>
                 </Card>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-md mx-4">
                 <DialogHeader>
                   <DialogTitle>New Routine</DialogTitle>
                 </DialogHeader>
@@ -448,7 +591,7 @@ const Workouts = () => {
                       placeholder="Describe your routine..."
                     />
                   </div>
-                  <div className="flex space-x-2 pt-4">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
                     <Button 
                       type="button" 
                       variant="outline" 
@@ -466,6 +609,49 @@ const Workouts = () => {
             </Dialog>
           </div>
         )}
+
+        {/* Rename Dialog */}
+        <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+          <DialogContent className="sm:max-w-md mx-4">
+            <DialogHeader>
+              <DialogTitle>Rename Routine</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleRenameSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="rename-name">Routine Name</Label>
+                <Input
+                  id="rename-name"
+                  value={renameData.name}
+                  onChange={(e) => setRenameData({...renameData, name: e.target.value})}
+                  placeholder="Enter routine name"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rename-description">Description</Label>
+                <Textarea
+                  id="rename-description"
+                  value={renameData.description}
+                  onChange={(e) => setRenameData({...renameData, description: e.target.value})}
+                  placeholder="Describe your routine..."
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setShowRenameDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" className="flex-1">
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
