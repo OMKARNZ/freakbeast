@@ -95,7 +95,14 @@ const WorkoutSession = () => {
   };
 
   const startWorkout = () => {
-    if (!routineId) return;
+    if (!routineId || exercises.length === 0) {
+      toast({
+        title: "No Exercises",
+        description: "Please add exercises to your routine before starting a workout.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setWorkoutStarted(true);
     setStartTime(new Date());
@@ -107,11 +114,11 @@ const WorkoutSession = () => {
   const createWorkoutSession = async () => {
     if (!user || !routineId) return;
 
-    // Create workout without daily_routine_id since we might not have one
     const { data: workoutData, error: workoutError } = await supabase
       .from('workouts')
       .insert([{
         user_id: user.id,
+        daily_routine_id: routineId,
         name: 'Workout Session',
         status: 'in_progress',
         started_at: new Date().toISOString()
@@ -122,56 +129,34 @@ const WorkoutSession = () => {
     if (workoutError) {
       console.error('Error creating workout:', workoutError);
       toast({
-        title: "Error",
-        description: "Failed to create workout session. Please try again.",
+        title: "Error", 
+        description: "Failed to create workout session. Please check that you have exercises in your routine.",
         variant: "destructive",
       });
+      setWorkoutStarted(false);
       return;
     }
 
     setWorkout(workoutData);
-    
-    // Create workout exercises from routine exercises
-    if (exercises.length > 0) {
-      const workoutExercises = exercises.map((exercise: any, index: number) => ({
-        workout_id: workoutData.id,
-        exercise_id: exercise.exercise_id || exercise.exercises.id,
-        order_index: index,
-        target_sets: exercise.sets,
-        target_reps: exercise.reps,
-        target_weight_kg: exercise.weight_kg,
-        target_duration_seconds: exercise.duration_seconds,
-        target_distance_meters: exercise.distance_meters,
-        rest_seconds: exercise.rest_seconds
-      }));
-
-      const { error: exerciseError } = await supabase
-        .from('workout_exercises')
-        .insert(workoutExercises);
-
-      if (exerciseError) {
-        console.error('Error creating workout exercises:', exerciseError);
-      }
-    }
   };
 
   const completeExercise = async (exerciseId: string) => {
-    const newCompleted = new Set([...completedExercises, exerciseId]);
-    setCompletedExercises(newCompleted);
+    setCompletedExercises(new Set([...completedExercises, exerciseId]));
     
-    // Update the workout exercise as completed
+    // Save exercise completion to database if workout exists
     if (workout) {
-      const { error } = await supabase
-        .from('workout_exercises')
-        .update({ 
-          sets_completed: currentExercise?.sets || 1,
-          completed_at: new Date().toISOString()
-        })
-        .eq('workout_id', workout.id)
-        .eq('exercise_id', exerciseId);
-
-      if (error) {
-        console.error('Error updating workout exercise:', error);
+      try {
+        await supabase
+          .from('workout_exercises')
+          .upsert({
+            workout_id: workout.id,
+            exercise_id: exerciseId,
+            order_index: currentExerciseIndex,
+            sets_completed: 1,
+            completed_at: new Date().toISOString()
+          });
+      } catch (error) {
+        console.error('Error saving exercise completion:', error);
       }
     }
     
@@ -198,6 +183,11 @@ const WorkoutSession = () => {
 
     if (error) {
       console.error('Error updating workout:', error);
+      toast({
+        title: "Error",
+        description: "Failed to finish workout. Please try again.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -261,7 +251,7 @@ const WorkoutSession = () => {
                   <div className="flex-1 bg-muted rounded-full h-2">
                     <div 
                       className="bg-primary h-2 rounded-full transition-all"
-                      style={{ width: `${(completedExercises.size / exercises.length) * 100}%` }}
+                      style={{ width: `${exercises.length > 0 ? (completedExercises.size / exercises.length) * 100 : 0}%` }}
                     />
                   </div>
                   <span className="text-sm font-medium">
@@ -337,7 +327,7 @@ const WorkoutSession = () => {
             </Card>
 
             {/* Finish Workout */}
-            {completedExercises.size === exercises.length && (
+            {completedExercises.size === exercises.length && exercises.length > 0 && (
               <Button onClick={finishWorkout} size="lg" className="w-full max-w-md mx-auto">
                 <Check className="w-4 h-4 mr-2" />
                 Finish Workout
