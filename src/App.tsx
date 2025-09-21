@@ -14,6 +14,7 @@ import Settings from "@/pages/Settings";
 import ExerciseCatalog from "@/pages/ExerciseCatalog";
 import RoutineDetails from "@/pages/RoutineDetails";
 import WorkoutSession from "@/pages/WorkoutSession";
+import VerificationSuccess from "@/pages/VerificationSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/verification-success" element={<VerificationSuccess />} />
           <Route path="/" element={
             <ProtectedRoute>
               <Workouts />

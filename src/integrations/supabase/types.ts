@@ -244,6 +244,30 @@ export type Database = {
           },
         ]
       }
+      user_verifications: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          verification_type: string
+          verified_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          verification_type?: string
+          verified_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          verification_type?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       workout_exercises: {
         Row: {
           actual_distance_meters: number | null
@@ -430,6 +454,7 @@ export type Database = {
         | "strength"
         | "endurance"
         | "general_fitness"
+        | "muscle_gain"
       muscle_group:
         | "chest"
         | "back"
@@ -582,6 +607,7 @@ export const Constants = {
         "strength",
         "endurance",
         "general_fitness",
+        "muscle_gain",
       ],
       muscle_group: [
         "chest",

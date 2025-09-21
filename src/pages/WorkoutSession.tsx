@@ -107,11 +107,11 @@ const WorkoutSession = () => {
   const createWorkoutSession = async () => {
     if (!user || !routineId) return;
 
+    // Create workout without daily_routine_id since we might not have one
     const { data: workoutData, error: workoutError } = await supabase
       .from('workouts')
       .insert([{
         user_id: user.id,
-        daily_routine_id: routineId,
         name: 'Workout Session',
         status: 'in_progress',
         started_at: new Date().toISOString()
@@ -121,14 +121,59 @@ const WorkoutSession = () => {
 
     if (workoutError) {
       console.error('Error creating workout:', workoutError);
+      toast({
+        title: "Error",
+        description: "Failed to create workout session. Please try again.",
+        variant: "destructive",
+      });
       return;
     }
 
     setWorkout(workoutData);
+    
+    // Create workout exercises from routine exercises
+    if (exercises.length > 0) {
+      const workoutExercises = exercises.map((exercise: any, index: number) => ({
+        workout_id: workoutData.id,
+        exercise_id: exercise.exercise_id || exercise.exercises.id,
+        order_index: index,
+        target_sets: exercise.sets,
+        target_reps: exercise.reps,
+        target_weight_kg: exercise.weight_kg,
+        target_duration_seconds: exercise.duration_seconds,
+        target_distance_meters: exercise.distance_meters,
+        rest_seconds: exercise.rest_seconds
+      }));
+
+      const { error: exerciseError } = await supabase
+        .from('workout_exercises')
+        .insert(workoutExercises);
+
+      if (exerciseError) {
+        console.error('Error creating workout exercises:', exerciseError);
+      }
+    }
   };
 
-  const completeExercise = (exerciseId: string) => {
-    setCompletedExercises(new Set([...completedExercises, exerciseId]));
+  const completeExercise = async (exerciseId: string) => {
+    const newCompleted = new Set([...completedExercises, exerciseId]);
+    setCompletedExercises(newCompleted);
+    
+    // Update the workout exercise as completed
+    if (workout) {
+      const { error } = await supabase
+        .from('workout_exercises')
+        .update({ 
+          sets_completed: currentExercise?.sets || 1,
+          completed_at: new Date().toISOString()
+        })
+        .eq('workout_id', workout.id)
+        .eq('exercise_id', exerciseId);
+
+      if (error) {
+        console.error('Error updating workout exercise:', error);
+      }
+    }
     
     if (currentExerciseIndex < exercises.length - 1) {
       setCurrentExerciseIndex(currentExerciseIndex + 1);

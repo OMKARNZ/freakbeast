@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dumbbell, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import fitnessHero from '@/assets/fitness-hero.jpg';
+
 
 const Auth = () => {
   const { user, loading, signIn, signUp } = useAuth();
@@ -63,15 +63,11 @@ const Auth = () => {
           <div className="text-center space-y-6">
             <div className="flex items-center justify-center space-x-2">
               <Dumbbell className="w-8 h-8 text-primary" />
-              <h1 className="text-2xl font-bold">FitTracker</h1>
+              <h1 className="text-2xl font-bold">Freakbeast</h1>
             </div>
             
-            <div className="relative">
-              <img 
-                src={fitnessHero} 
-                alt="Fitness tracking illustration" 
-                className="w-full max-w-xs mx-auto rounded-lg shadow-card"
-              />
+            <div className="w-20 h-20 bg-gradient-card rounded-full flex items-center justify-center shadow-card mx-auto">
+              <Dumbbell className="w-10 h-10 text-primary" />
             </div>
             
             <div className="space-y-2">
