@@ -491,7 +491,7 @@ const Workouts = () => {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/routines/${routine.id}`);
+                          navigate(`/workout-session/${routine.id}`);
                         }}
                         className="flex-shrink-0"
                       >

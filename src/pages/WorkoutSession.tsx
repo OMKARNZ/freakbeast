@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Pause, Check, RotateCcw, Timer } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Check, RotateCcw, Timer, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,8 @@ const WorkoutSession = () => {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
   const [workoutStarted, setWorkoutStarted] = useState(false);
+  const [workoutPaused, setWorkoutPaused] = useState(false);
+  const [pausedTime, setPausedTime] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [notes, setNotes] = useState('');
 
@@ -165,11 +167,30 @@ const WorkoutSession = () => {
     }
   };
 
+  const pauseWorkout = () => {
+    if (workoutStarted && !workoutPaused) {
+      setWorkoutPaused(true);
+      if (startTime) {
+        setPausedTime(prev => prev + (new Date().getTime() - startTime.getTime()));
+      }
+    }
+  };
+
+  const resumeWorkout = () => {
+    if (workoutPaused) {
+      setWorkoutPaused(false);
+      setStartTime(new Date());
+    }
+  };
+
   const finishWorkout = async () => {
     if (!workout || !startTime) return;
 
     const endTime = new Date();
-    const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000); // minutes
+    const totalTime = workoutPaused 
+      ? pausedTime + (endTime.getTime() - startTime.getTime())
+      : endTime.getTime() - startTime.getTime();
+    const duration = Math.round(totalTime / 60000); // minutes
 
     const { error } = await supabase
       .from('workouts')
@@ -211,9 +232,40 @@ const WorkoutSession = () => {
           </Button>
           <h1 className="text-lg sm:text-xl font-bold">Workout Session</h1>
         </div>
-        <Badge variant={workoutStarted ? 'default' : 'secondary'}>
-          {workoutStarted ? 'In Progress' : 'Ready'}
-        </Badge>
+        <div className="flex items-center space-x-2">
+          <Badge variant={workoutStarted ? (workoutPaused ? 'outline' : 'default') : 'secondary'}>
+            {workoutStarted ? (workoutPaused ? 'Paused' : 'In Progress') : 'Ready'}
+          </Badge>
+          {workoutStarted && (
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={workoutPaused ? resumeWorkout : pauseWorkout}
+              >
+                {workoutPaused ? (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Resume
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-4 h-4 mr-2" />
+                    Pause
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={finishWorkout}
+              >
+                <Square className="w-4 h-4 mr-2" />
+                Finish
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Content */}
@@ -241,7 +293,8 @@ const WorkoutSession = () => {
                   <div className="flex items-center space-x-2">
                     <Timer className="w-4 h-4" />
                     <span className="text-sm">
-                      {startTime && Math.round((new Date().getTime() - startTime.getTime()) / 60000)}m
+                      {startTime && !workoutPaused && Math.round(((pausedTime + new Date().getTime() - startTime.getTime()) / 60000))}
+                      {workoutPaused && Math.round(pausedTime / 60000)}m
                     </span>
                   </div>
                 </CardTitle>

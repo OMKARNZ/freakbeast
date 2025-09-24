@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Download, BarChart3, TrendingUp } from 'lucide-react';
+import { Calendar, Download, BarChart3, TrendingUp, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import jsPDF from 'jspdf';
+import { useNavigate } from 'react-router-dom';
 
 const Progress = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [workoutCount, setWorkoutCount] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [routineCount, setRoutineCount] = useState(0);
+  const [completedWorkoutDates, setCompletedWorkoutDates] = useState<Date[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>();
 
   useEffect(() => {
     if (user) {
@@ -33,19 +42,31 @@ const Progress = () => {
 
       setWorkoutCount(workouts?.length || 0);
 
-      // Calculate streak (simplified - consecutive days with completed workouts)
+      // Fetch routines count
+      const { data: routines, error: routineError } = await supabase
+        .from('workout_routines')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (routineError) throw routineError;
+      setRoutineCount(routines?.length || 0);
+
+      // Calculate streak and workout dates
       if (workouts && workouts.length > 0) {
         const completedDates = workouts
-          .map(w => new Date(w.completed_at).toDateString())
-          .sort();
+          .map(w => new Date(w.completed_at))
+          .filter(date => !isNaN(date.getTime()))
+          .sort((a, b) => a.getTime() - b.getTime());
         
-        const uniqueDates = [...new Set(completedDates)];
+        setCompletedWorkoutDates(completedDates);
+        
+        const uniqueDateStrings = [...new Set(completedDates.map(d => d.toDateString()))];
         let streak = 0;
-        const today = new Date().toDateString();
+        const today = new Date();
         
-        for (let i = uniqueDates.length - 1; i >= 0; i--) {
-          const date = new Date(uniqueDates[i]);
-          const expectedDate = new Date();
+        for (let i = uniqueDateStrings.length - 1; i >= 0; i--) {
+          const date = new Date(uniqueDateStrings[i]);
+          const expectedDate = new Date(today);
           expectedDate.setDate(expectedDate.getDate() - streak);
           
           if (date.toDateString() === expectedDate.toDateString()) {
@@ -64,12 +85,49 @@ const Progress = () => {
     }
   };
 
+  const exportPDF = async () => {
+    const pdf = new jsPDF();
+    
+    pdf.setFontSize(20);
+    pdf.text('Fitness Progress Report', 20, 30);
+    
+    pdf.setFontSize(12);
+    pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 45);
+    
+    pdf.setFontSize(14);
+    pdf.text('Statistics:', 20, 65);
+    
+    pdf.setFontSize(12);
+    pdf.text(`Total Workouts Completed: ${workoutCount}`, 30, 80);
+    pdf.text(`Current Streak: ${currentStreak} days`, 30, 95);
+    pdf.text(`Total Routines Created: ${routineCount}`, 30, 110);
+    
+    if (completedWorkoutDates.length > 0) {
+      pdf.text('Recent Workout Dates:', 20, 130);
+      const recentWorkouts = completedWorkoutDates
+        .slice(-10)
+        .map(date => date.toLocaleDateString())
+        .join(', ');
+      
+      const lines = pdf.splitTextToSize(recentWorkouts, 170);
+      pdf.text(lines, 30, 145);
+    }
+    
+    pdf.save('fitness-progress-report.pdf');
+  };
+
+  const isWorkoutDate = (date: Date) => {
+    return completedWorkoutDates.some(workoutDate => 
+      workoutDate.toDateString() === date.toDateString()
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <h1 className="text-xl font-bold">Progress Reports</h1>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={exportPDF}>
           <Download className="w-4 h-4 mr-2" />
           Export PDF
         </Button>
@@ -121,6 +179,53 @@ const Progress = () => {
           </Card>
         </div>
 
+        {/* Additional Stats */}
+        <div className="grid grid-cols-1 gap-4">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Routines Created</p>
+                    <p className="text-lg font-bold">{loading ? '...' : routineCount}</p>
+                  </div>
+                </div>
+                <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <CalendarDays className="w-4 h-4 mr-2" />
+                      View Calendar
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Workout Calendar</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <CalendarComponent
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        modifiers={{
+                          workout: completedWorkoutDates
+                        }}
+                        modifiersStyles={{
+                          workout: { backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }
+                        }}
+                        className="rounded-md border"
+                      />
+                      <p className="text-sm text-muted-foreground text-center">
+                        Highlighted dates show completed workouts
+                      </p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Empty State */}
         {workoutCount === 0 && !loading && (
           <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
@@ -140,9 +245,9 @@ const Progress = () => {
               </p>
             </div>
 
-            <Button variant="outline" className="w-full max-w-xs">
+            <Button variant="outline" className="w-full max-w-xs" onClick={() => navigate('/workouts')}>
               <Calendar className="w-4 h-4 mr-2" />
-              View Workout Calendar
+              Start Your First Workout
             </Button>
           </div>
         )}
