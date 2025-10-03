@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Pause, Check, RotateCcw, Timer, Square } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Check, Timer, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,7 @@ const WorkoutSession = () => {
   const [pausedTime, setPausedTime] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [notes, setNotes] = useState('');
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -34,6 +35,23 @@ const WorkoutSession = () => {
       }
     }
   }, [routineId, workoutId, user]);
+
+  // Live timer update
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (workoutStarted && !workoutPaused && startTime) {
+      interval = setInterval(() => {
+        const now = new Date().getTime();
+        const start = startTime.getTime();
+        setElapsedTime(Math.floor((pausedTime + (now - start)) / 1000));
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [workoutStarted, workoutPaused, startTime, pausedTime]);
 
   const fetchExistingWorkout = async () => {
     if (!user || !workoutId) return;
@@ -220,6 +238,17 @@ const WorkoutSession = () => {
     navigate('/workouts');
   };
 
+  const formatTime = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const currentExercise = exercises[currentExerciseIndex];
 
   return (
@@ -232,49 +261,55 @@ const WorkoutSession = () => {
           </Button>
           <h1 className="text-lg sm:text-xl font-bold">Workout Session</h1>
         </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant={workoutStarted ? (workoutPaused ? 'outline' : 'default') : 'secondary'}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Badge variant={workoutStarted ? (workoutPaused ? 'outline' : 'default') : 'secondary'} className="text-xs sm:text-sm">
             {workoutStarted ? (workoutPaused ? 'Paused' : 'In Progress') : 'Ready'}
           </Badge>
           {workoutStarted && (
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={workoutPaused ? resumeWorkout : pauseWorkout}
-              >
-                {workoutPaused ? (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Resume
-                  </>
-                ) : (
-                  <>
-                    <Pause className="w-4 h-4 mr-2" />
-                    Pause
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={finishWorkout}
-              >
-                <Square className="w-4 h-4 mr-2" />
-                Finish
-              </Button>
+            <div className="flex items-center gap-2 text-lg sm:text-xl font-bold">
+              <Timer className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>{formatTime(elapsedTime)}</span>
             </div>
           )}
         </div>
+        {workoutStarted && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={workoutPaused ? resumeWorkout : pauseWorkout}
+            >
+              {workoutPaused ? (
+                <>
+                  <Play className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Resume</span>
+                </>
+              ) : (
+                <>
+                  <Pause className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Pause</span>
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={finishWorkout}
+            >
+              <Square className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Finish</span>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-4 space-y-6">
+      <div className="flex-1 p-3 sm:p-4 space-y-4 sm:space-y-6">
         {!workoutStarted ? (
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-4 sm:space-y-6 px-4">
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold">Ready to start?</h2>
-              <p className="text-muted-foreground">
+              <h2 className="text-xl sm:text-2xl font-bold">Ready to start?</h2>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 You have {exercises.length} exercises in this routine
               </p>
             </div>
@@ -284,18 +319,15 @@ const WorkoutSession = () => {
             </Button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Progress */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Progress</span>
-                  <div className="flex items-center space-x-2">
+                <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <span className="text-base sm:text-lg">Progress</span>
+                  <div className="flex items-center space-x-2 text-sm sm:text-base">
                     <Timer className="w-4 h-4" />
-                    <span className="text-sm">
-                      {startTime && !workoutPaused && Math.round(((pausedTime + new Date().getTime() - startTime.getTime()) / 60000))}
-                      {workoutPaused && Math.round(pausedTime / 60000)}m
-                    </span>
+                    <span className="font-bold">{formatTime(elapsedTime)}</span>
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -307,7 +339,7 @@ const WorkoutSession = () => {
                       style={{ width: `${exercises.length > 0 ? (completedExercises.size / exercises.length) * 100 : 0}%` }}
                     />
                   </div>
-                  <span className="text-sm font-medium">
+                  <span className="text-xs sm:text-sm font-medium">
                     {completedExercises.size}/{exercises.length}
                   </span>
                 </div>
@@ -318,10 +350,10 @@ const WorkoutSession = () => {
             {currentExercise && (
               <Card>
                 <CardHeader>
-                  <CardTitle>{currentExercise.exercises.name}</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">{currentExercise.exercises.name}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Sets:</span>
                       <span className="ml-2 font-medium">{currentExercise.sets}</span>
@@ -367,14 +399,14 @@ const WorkoutSession = () => {
             {/* Notes */}
             <Card>
               <CardHeader>
-                <CardTitle>Workout Notes</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Workout Notes</CardTitle>
               </CardHeader>
               <CardContent>
                 <Textarea
                   placeholder="Add notes about your workout..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-[100px]"
+                  className="min-h-[80px] sm:min-h-[100px]"
                 />
               </CardContent>
             </Card>

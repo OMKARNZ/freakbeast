@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Trash2, HelpCircle, Shield, User } from 'lucide-react';
+import { Bell, Trash2, HelpCircle, User, Moon, Sun, Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -7,16 +7,21 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { EditProfileDialog } from '@/components/EditProfileDialog';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const Settings = () => {
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
   const [notifications, setNotifications] = useState({
     workoutReminders: false,
     goalNotifications: false,
     weeklySummary: true
   });
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showHelpCenter, setShowHelpCenter] = useState(false);
 
   const handleDeleteAccount = async () => {
     // TODO: Implement account deletion with backend
@@ -35,39 +40,12 @@ const Settings = () => {
     });
   };
 
-  const handleEditProfile = () => {
-    toast({
-      title: "Edit Profile",
-      description: "Profile editing feature coming soon!",
-    });
-  };
-
-  const handlePrivacySettings = () => {
-    toast({
-      title: "Privacy Settings",
-      description: "Privacy settings feature coming soon!",
-    });
-  };
-
-  const handleHelpCenter = () => {
-    toast({
-      title: "Help Center",
-      description: "Help center feature coming soon!",
-    });
-  };
-
-  const handleContactSupport = () => {
-    toast({
-      title: "Contact Support",
-      description: "Support contact feature coming soon!",
-    });
-  };
 
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
-        <h1 className="text-xl font-bold">Settings</h1>
+        <h1 className="text-lg sm:text-xl font-bold">Settings</h1>
       </div>
 
       {/* Main Content */}
@@ -81,7 +59,7 @@ const Settings = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <Label htmlFor="workout-reminders" className="text-sm">
                 Workout Reminders
               </Label>
@@ -92,7 +70,7 @@ const Settings = () => {
               />
             </div>
             
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <Label htmlFor="goal-notifications" className="text-sm">
                 Goal Progress Notifications
               </Label>
@@ -103,7 +81,7 @@ const Settings = () => {
               />
             </div>
             
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <Label htmlFor="weekly-summary" className="text-sm">
                 Weekly Summary
               </Label>
@@ -111,6 +89,28 @@ const Settings = () => {
                 id="weekly-summary" 
                 checked={notifications.weeklySummary}
                 onCheckedChange={(checked) => handleNotificationChange('weeklySummary', checked)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Appearance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              <span>Appearance</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Dark Mode</Label>
+                <p className="text-xs text-muted-foreground">Switch between light and dark theme</p>
+              </div>
+              <Switch 
+                checked={theme === 'dark'}
+                onCheckedChange={toggleTheme}
               />
             </div>
           </CardContent>
@@ -124,15 +124,14 @@ const Settings = () => {
               <span>Account</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Button variant="outline" className="w-full justify-start" onClick={handleEditProfile}>
+          <CardContent className="space-y-3">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start" 
+              onClick={() => setShowEditProfile(true)}
+            >
               <User className="w-4 h-4 mr-3" />
               Edit Profile
-            </Button>
-            
-            <Button variant="outline" className="w-full justify-start" onClick={handlePrivacySettings}>
-              <Shield className="w-4 h-4 mr-3" />
-              Privacy Settings
             </Button>
             
             <Button variant="outline" className="w-full justify-start" onClick={signOut}>
@@ -149,14 +148,14 @@ const Settings = () => {
               <span>Support</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Button variant="outline" className="w-full justify-start" onClick={handleHelpCenter}>
+          <CardContent className="space-y-3">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start" 
+              onClick={() => setShowHelpCenter(true)}
+            >
               <HelpCircle className="w-4 h-4 mr-3" />
-              Help Center
-            </Button>
-            
-            <Button variant="outline" className="w-full justify-start" onClick={handleContactSupport}>
-              Contact Support
+              Help & Contact
             </Button>
           </CardContent>
         </Card>
@@ -200,6 +199,46 @@ const Settings = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialogs */}
+      <EditProfileDialog open={showEditProfile} onOpenChange={setShowEditProfile} />
+
+      <Dialog open={showHelpCenter} onOpenChange={setShowHelpCenter}>
+        <DialogContent className="sm:max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>Help & Contact</DialogTitle>
+            <DialogDescription>
+              Get in touch with us for support
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-start space-x-3 p-3 bg-muted rounded-lg">
+              <Mail className="w-5 h-5 mt-0.5 text-primary" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium">Email Support</p>
+                <p className="text-sm text-muted-foreground">support@freakbeast.com</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-3 bg-muted rounded-lg">
+              <Phone className="w-5 h-5 mt-0.5 text-primary" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium">Phone Support</p>
+                <p className="text-sm text-muted-foreground">+1 (555) 123-4567</p>
+              </div>
+            </div>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-xs text-muted-foreground">
+                Support hours: Monday - Friday, 9AM - 6PM EST
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowHelpCenter(false)} className="w-full">
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
