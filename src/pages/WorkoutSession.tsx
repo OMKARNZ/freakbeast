@@ -18,7 +18,7 @@ const WorkoutSession = () => {
   const [workout, setWorkout] = useState<any>(null);
   const [exercises, setExercises] = useState<any[]>([]);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
+  const [completedRoutineExerciseIds, setCompletedRoutineExerciseIds] = useState<Set<string>>(new Set());
   const [workoutStarted, setWorkoutStarted] = useState(false);
   const [workoutPaused, setWorkoutPaused] = useState(false);
   const [pausedTime, setPausedTime] = useState(0);
@@ -75,22 +75,25 @@ const WorkoutSession = () => {
       setStartTime(new Date(workoutData.started_at));
     }
 
-    // Fetch workout exercises
-    const { data: exercisesData, error: exercisesError } = await supabase
-      .from('workout_exercises')
-      .select(`
-        *,
-        exercises (*)
-      `)
-      .eq('workout_id', workoutId)
-      .order('order_index');
+    // Always base display on routine exercises for the workout's daily routine
+    if (workoutData.daily_routine_id) {
+      const { data: routineExercises, error: routineErr } = await supabase
+        .from('routine_exercises')
+        .select(`
+          *,
+          exercises (*)
+        `)
+        .eq('daily_routine_id', workoutData.daily_routine_id)
+        .order('order_index');
 
-    if (exercisesError) {
-      console.error('Error fetching workout exercises:', exercisesError);
-      return;
+      if (routineErr) {
+        console.error('Error fetching routine exercises for workout:', routineErr);
+        return;
+      }
+      setExercises(routineExercises || []);
+    } else {
+      setExercises([]);
     }
-
-    setExercises(exercisesData || []);
   };
 
   const fetchWorkoutData = async () => {
@@ -160,8 +163,8 @@ const WorkoutSession = () => {
     setWorkout(workoutData);
   };
 
-  const completeExercise = async (exerciseId: string) => {
-    setCompletedExercises(new Set([...completedExercises, exerciseId]));
+  const completeExercise = async (routineExerciseId: string, exerciseId: string) => {
+    setCompletedRoutineExerciseIds(new Set([...completedRoutineExerciseIds, routineExerciseId]));
     
     // Save exercise completion to database if workout exists
     if (workout) {
@@ -336,11 +339,11 @@ const WorkoutSession = () => {
                   <div className="flex-1 bg-muted rounded-full h-2">
                     <div 
                       className="bg-primary h-2 rounded-full transition-all"
-                      style={{ width: `${exercises.length > 0 ? (completedExercises.size / exercises.length) * 100 : 0}%` }}
+                      style={{ width: `${exercises.length > 0 ? (completedRoutineExerciseIds.size / exercises.length) * 100 : 0}%` }}
                     />
                   </div>
                   <span className="text-xs sm:text-sm font-medium">
-                    {completedExercises.size}/{exercises.length}
+                    {completedRoutineExerciseIds.size}/{exercises.length}
                   </span>
                 </div>
               </CardContent>
@@ -379,11 +382,11 @@ const WorkoutSession = () => {
                   )}
 
                   <Button 
-                    onClick={() => completeExercise(currentExercise.id)}
+                    onClick={() => completeExercise(currentExercise.id, currentExercise.exercise_id)}
                     className="w-full"
-                    disabled={completedExercises.has(currentExercise.id)}
+                    disabled={completedRoutineExerciseIds.has(currentExercise.id)}
                   >
-                    {completedExercises.has(currentExercise.id) ? (
+                    {completedRoutineExerciseIds.has(currentExercise.id) ? (
                       <>
                         <Check className="w-4 h-4 mr-2" />
                         Completed
@@ -412,7 +415,7 @@ const WorkoutSession = () => {
             </Card>
 
             {/* Finish Workout */}
-            {completedExercises.size === exercises.length && exercises.length > 0 && (
+            {completedRoutineExerciseIds.size === exercises.length && exercises.length > 0 && (
               <Button onClick={finishWorkout} size="lg" className="w-full max-w-md mx-auto">
                 <Check className="w-4 h-4 mr-2" />
                 Finish Workout

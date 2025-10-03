@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, MoreVertical, Play, MoreHorizontal, Calendar, Clock, Edit, Copy, Share2, Trash2 } from 'lucide-react';
+import { Plus, MoreVertical, Play, MoreHorizontal, Calendar, Clock, Edit, Copy, Share2, Trash2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -491,7 +491,7 @@ const Workouts = () => {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/workout-session/${routine.id}`);
+                          navigate(`/routines/${routine.id}`);
                         }}
                         className="flex-shrink-0"
                       >

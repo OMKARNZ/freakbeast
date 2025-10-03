@@ -488,10 +488,11 @@ const Goals = () => {
                         />
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Button 
                         variant="outline" 
                         size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() => handleStartGoal(goal.id)}
                         disabled={goal.status === 'completed'}
                       >
@@ -501,6 +502,7 @@ const Goals = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() => handleUpdateProgress(goal.id)}
                         disabled={goal.status === 'completed'}
                       >
@@ -511,6 +513,7 @@ const Goals = () => {
                         <Button 
                           variant="default" 
                           size="sm"
+                          className="w-full sm:w-auto"
                           onClick={() => handleCompleteGoal(goal.id)}
                         >
                           <Trophy className="w-4 h-4 mr-1" />
@@ -519,7 +522,7 @@ const Goals = () => {
                       )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" className="w-full sm:w-auto">
                             <Trash2 className="w-4 h-4 mr-1" />
                             Delete
                           </Button>

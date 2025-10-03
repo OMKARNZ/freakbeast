@@ -235,7 +235,7 @@ const RoutineDetails = () => {
       return;
     }
 
-    navigate(`/workout-session/${workoutData.id}`);
+    navigate(`/workout-session/workout/${workoutData.id}`);
   };
 
   const handleDeleteDay = async (dayId: string) => {

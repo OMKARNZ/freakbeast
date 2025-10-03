@@ -75,6 +75,11 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
         bmi: bmi ? parseFloat(bmi) : null
       });
 
+    // Also update auth metadata for consistency in UI
+    await supabase.auth.updateUser({
+      data: { full_name: formData.full_name }
+    });
+
     setLoading(false);
 
     if (error) {
