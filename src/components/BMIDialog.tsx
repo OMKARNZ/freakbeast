@@ -87,12 +87,14 @@ export function BMIDialog({ open, onOpenChange }: BMIDialogProps) {
 
     const { error } = await supabase
       .from('profiles')
-      .upsert({
-        user_id: user.id,
-        height_cm: parseInt(formData.height_cm),
-        weight_kg: parseFloat(formData.weight_kg),
-        bmi: bmi
-      });
+      .upsert([
+        {
+          user_id: user.id,
+          height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
+          weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
+          bmi: bmi
+        }
+      ], { onConflict: 'user_id' });
 
     setLoading(false);
 
@@ -110,9 +112,11 @@ export function BMIDialog({ open, onOpenChange }: BMIDialogProps) {
       description: "BMI information saved successfully!",
     });
 
+    // Notify other parts of the app (e.g., Profile page) to refresh
+    window.dispatchEvent(new CustomEvent('profile-updated'));
+
     onOpenChange(false);
   };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md mx-4">

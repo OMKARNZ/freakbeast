@@ -86,34 +86,47 @@ const Progress = () => {
   };
 
   const exportPDF = async () => {
-    const pdf = new jsPDF();
-    
-    pdf.setFontSize(20);
-    pdf.text('Fitness Progress Report', 20, 30);
-    
-    pdf.setFontSize(12);
-    pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 45);
-    
-    pdf.setFontSize(14);
-    pdf.text('Statistics:', 20, 65);
-    
-    pdf.setFontSize(12);
-    pdf.text(`Total Workouts Completed: ${workoutCount}`, 30, 80);
-    pdf.text(`Current Streak: ${currentStreak} days`, 30, 95);
-    pdf.text(`Total Routines Created: ${routineCount}`, 30, 110);
-    
-    if (completedWorkoutDates.length > 0) {
-      pdf.text('Recent Workout Dates:', 20, 130);
-      const recentWorkouts = completedWorkoutDates
-        .slice(-10)
-        .map(date => date.toLocaleDateString())
-        .join(', ');
-      
-      const lines = pdf.splitTextToSize(recentWorkouts, 170);
-      pdf.text(lines, 30, 145);
+    try {
+      const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+
+      pdf.setFontSize(20);
+      pdf.text('Fitness Progress Report', 40, 60);
+
+      pdf.setFontSize(12);
+      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 40, 80);
+
+      pdf.setFontSize(14);
+      pdf.text('Statistics:', 40, 110);
+
+      pdf.setFontSize(12);
+      pdf.text(`Total Workouts Completed: ${workoutCount}`, 50, 130);
+      pdf.text(`Current Streak: ${currentStreak} days`, 50, 150);
+      pdf.text(`Total Routines Created: ${routineCount}`, 50, 170);
+
+      if (completedWorkoutDates.length > 0) {
+        pdf.text('Recent Workout Dates:', 40, 200);
+        const recentWorkouts = completedWorkoutDates
+          .slice(-10)
+          .map(date => date.toLocaleDateString())
+          .join(', ');
+        const lines = pdf.splitTextToSize(recentWorkouts, 500);
+        pdf.text(lines, 50, 220);
+      }
+
+      // Mobile-friendly download
+      const blob = pdf.output('blob');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'fitness-progress-report.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Failed to export PDF', e);
+      // no toast hook here; log only
     }
-    
-    pdf.save('fitness-progress-report.pdf');
   };
 
   const isWorkoutDate = (date: Date) => {
@@ -213,7 +226,7 @@ const Progress = () => {
                         modifiersStyles={{
                           workout: { backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }
                         }}
-                        className="rounded-md border"
+                        className="rounded-md border p-3 pointer-events-auto"
                       />
                       <p className="text-sm text-muted-foreground text-center">
                         Highlighted dates show completed workouts

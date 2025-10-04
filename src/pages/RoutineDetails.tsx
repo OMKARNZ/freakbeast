@@ -168,6 +168,15 @@ const RoutineDetails = () => {
     e.preventDefault();
     if (!selectedDayId) return;
 
+    if (!exerciseForm.exercise_id) {
+      toast({
+        title: "Select exercise",
+        description: "Please choose an exercise before adding.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('routine_exercises')
       .insert([{
@@ -179,7 +188,7 @@ const RoutineDetails = () => {
         duration_seconds: exerciseForm.duration_seconds ? parseInt(exerciseForm.duration_seconds) : null,
         rest_seconds: parseInt(exerciseForm.rest_seconds),
         notes: exerciseForm.notes,
-        order_index: 1 // TODO: Calculate proper order
+         order_index: (routineExercises[selectedDayId]?.length || 0) + 1 // maintain correct order
       }]);
 
     if (error) {
@@ -293,7 +302,7 @@ const RoutineDetails = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select day" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[60] bg-background">
                     {daysOfWeek.map(day => (
                       <SelectItem key={day.value} value={day.value}>{day.label}</SelectItem>
                     ))}
@@ -479,7 +488,7 @@ const RoutineDetails = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="Select exercise" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[60] bg-background">
                   {exercises.map((exercise: any) => (
                     <SelectItem key={exercise.id} value={exercise.id}>
                       <div className="flex items-center space-x-2">

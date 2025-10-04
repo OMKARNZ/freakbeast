@@ -66,14 +66,16 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
 
     const { error } = await supabase
       .from('profiles')
-      .upsert({
-        user_id: user.id,
-        full_name: formData.full_name,
-        age: formData.age ? parseInt(formData.age) : null,
-        height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
-        weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
-        bmi: bmi ? parseFloat(bmi) : null
-      });
+      .upsert([
+        {
+          user_id: user.id,
+          full_name: formData.full_name,
+          age: formData.age ? parseInt(formData.age) : null,
+          height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
+          weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
+          bmi: bmi ? parseFloat(bmi) : null
+        }
+      ], { onConflict: 'user_id' });
 
     // Also update auth metadata for consistency in UI
     await supabase.auth.updateUser({
@@ -96,9 +98,11 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       description: "Profile updated successfully!",
     });
 
+    // Notify other parts of the app (e.g., Profile page) to refresh
+    window.dispatchEvent(new CustomEvent('profile-updated'));
+
     onOpenChange(false);
   };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md mx-4">

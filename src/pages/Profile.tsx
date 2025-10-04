@@ -22,6 +22,14 @@ const Profile = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    const handler = () => {
+      fetchProfile();
+    };
+    window.addEventListener('profile-updated', handler);
+    return () => window.removeEventListener('profile-updated', handler);
+  }, []);
+
   const fetchProfile = async () => {
     if (!user) return;
 

@@ -449,20 +449,7 @@ const Workouts = () => {
                 >
                   <Plus className="w-5 h-5" />
                 </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  className="text-primary-foreground hover:bg-primary-foreground/20"
-                >
-                  <Play className="w-5 h-5" />
-                </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  className="text-primary-foreground hover:bg-primary-foreground/20"
-                >
-                  <MoreHorizontal className="w-5 h-5" />
-                </Button>
+                {/* Removed extra buttons per user request - keeping only Add */}
               </div>
             </div>
           </div>

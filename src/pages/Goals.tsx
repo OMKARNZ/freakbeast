@@ -244,7 +244,7 @@ const Goals = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select goal type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[60] bg-background">
                     <SelectItem value="weight_loss">Weight Loss</SelectItem>
                     <SelectItem value="muscle_gain">Muscle Gain</SelectItem>
                     <SelectItem value="endurance">Endurance</SelectItem>
@@ -371,7 +371,7 @@ const Goals = () => {
                       <SelectTrigger>
                         <SelectValue placeholder="Select goal type" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[60] bg-background">
                         <SelectItem value="weight_loss">Weight Loss</SelectItem>
                         <SelectItem value="weight_gain">Weight Gain</SelectItem>
                         <SelectItem value="muscle_building">Muscle Building</SelectItem>
