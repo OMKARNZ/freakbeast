@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Clock, Dumbbell, Play } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Clock, Dumbbell, Play, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { PredefinedPlansDialog } from '@/components/PredefinedPlansDialog';
 
 const RoutineDetails = () => {
   const { id } = useParams();
@@ -26,6 +27,7 @@ const RoutineDetails = () => {
   const [routineExercises, setRoutineExercises] = useState<{[key: string]: any[]}>({});
   const [showDayDialog, setShowDayDialog] = useState(false);
   const [showExerciseDialog, setShowExerciseDialog] = useState(false);
+  const [showPredefinedDialog, setShowPredefinedDialog] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string>('');
   const [dayForm, setDayForm] = useState({
     name: '',
@@ -270,6 +272,51 @@ const RoutineDetails = () => {
     fetchRoutineDetails();
   };
 
+  const handleApplyPredefinedPlan = async (planExercises: any[], targetDayId: string) => {
+    // Match predefined exercise names to actual exercise IDs from database
+    const exerciseNameMap: { [key: string]: string } = {};
+    
+    for (const planEx of planExercises) {
+      const { data: matchedEx } = await supabase
+        .from('exercises')
+        .select('id')
+        .ilike('name', `%${planEx.name}%`)
+        .limit(1)
+        .single();
+      
+      if (matchedEx) {
+        exerciseNameMap[planEx.name] = matchedEx.id;
+      }
+    }
+
+    // Insert exercises for the target day
+    const exercisesToInsert = planExercises
+      .filter(ex => exerciseNameMap[ex.name])
+      .map((ex, index) => ({
+        daily_routine_id: targetDayId,
+        exercise_id: exerciseNameMap[ex.name],
+        order_index: (routineExercises[targetDayId]?.length || 0) + index + 1,
+        sets: ex.sets,
+        reps: ex.reps,
+        rest_seconds: ex.rest,
+        notes: null,
+        weight_kg: null,
+        duration_seconds: null
+      }));
+
+    if (exercisesToInsert.length === 0) {
+      throw new Error('No matching exercises found');
+    }
+
+    const { error } = await supabase
+      .from('routine_exercises')
+      .insert(exercisesToInsert);
+
+    if (error) throw error;
+
+    fetchRoutineDetails();
+  };
+
   if (!routine) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -284,8 +331,14 @@ const RoutineDetails = () => {
           </Button>
           <h1 className="text-lg sm:text-xl font-bold">{routine.name}</h1>
         </div>
-        <Dialog open={showDayDialog} onOpenChange={setShowDayDialog}>
-          <DialogTrigger asChild>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowPredefinedDialog(true)}>
+            <Sparkles className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Predefined Plans</span>
+            <span className="sm:hidden">Plans</span>
+          </Button>
+          <Dialog open={showDayDialog} onOpenChange={setShowDayDialog}>
+            <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="w-4 h-4 mr-2" />
               Add Day
@@ -344,6 +397,7 @@ const RoutineDetails = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Content */}
@@ -579,6 +633,13 @@ const RoutineDetails = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      <PredefinedPlansDialog 
+        open={showPredefinedDialog} 
+        onOpenChange={setShowPredefinedDialog}
+        dailyRoutines={dailyRoutines}
+        onApplyPlan={handleApplyPredefinedPlan}
+      />
     </div>
   );
 };

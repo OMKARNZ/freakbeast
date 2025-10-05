@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Download, BarChart3, TrendingUp, CalendarDays } from 'lucide-react';
+import { Calendar, Download, BarChart3, TrendingUp, CalendarDays, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
@@ -17,6 +18,7 @@ const Progress = () => {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [routineCount, setRoutineCount] = useState(0);
   const [completedWorkoutDates, setCompletedWorkoutDates] = useState<Date[]>([]);
+  const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -77,6 +79,25 @@ const Progress = () => {
         }
         
         setCurrentStreak(streak);
+
+        // Generate weekly data for graph
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - (6 - i));
+          return date;
+        });
+
+        const chartData = last7Days.map(date => {
+          const dayWorkouts = completedDates.filter(
+            d => d.toDateString() === date.toDateString()
+          ).length;
+          return {
+            date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+            workouts: dayWorkouts
+          };
+        });
+
+        setWeeklyData(chartData);
       }
     } catch (error) {
       console.error('Error fetching progress data:', error);
@@ -265,16 +286,44 @@ const Progress = () => {
           </div>
         )}
 
-        {/* Sample Chart Placeholder */}
-        {workoutCount > 0 && (
+        {/* Weekly Progress Chart */}
+        {workoutCount > 0 && weeklyData.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Weekly Progress</CardTitle>
+              <CardTitle className="flex items-center space-x-2">
+                <Dumbbell className="w-5 h-5" />
+                <span>Weekly Progress</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-40 bg-muted rounded-lg flex items-center justify-center">
-                <p className="text-muted-foreground">Chart will appear here</p>
-              </div>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="workouts" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--primary))' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         )}

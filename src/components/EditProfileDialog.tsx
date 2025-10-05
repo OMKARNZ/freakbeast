@@ -64,9 +64,10 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
     const height = parseFloat(formData.height_cm);
     const bmi = calculateBMI(weight, height);
 
+    // Update profiles table
     const { error } = await supabase
       .from('profiles')
-      .upsert([
+      .upsert(
         {
           user_id: user.id,
           full_name: formData.full_name,
@@ -74,17 +75,13 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
           height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
           weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
           bmi: bmi ? parseFloat(bmi) : null
-        }
-      ], { onConflict: 'user_id' });
-
-    // Also update auth metadata for consistency in UI
-    await supabase.auth.updateUser({
-      data: { full_name: formData.full_name }
-    });
-
-    setLoading(false);
+        },
+        { onConflict: 'user_id' }
+      );
 
     if (error) {
+      console.error('Profile update error:', error);
+      setLoading(false);
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",
@@ -93,12 +90,19 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       return;
     }
 
+    // Update auth metadata for consistency
+    await supabase.auth.updateUser({
+      data: { full_name: formData.full_name }
+    });
+
+    setLoading(false);
+
     toast({
       title: "Success",
       description: "Profile updated successfully!",
     });
 
-    // Notify other parts of the app (e.g., Profile page) to refresh
+    // Notify Profile page to refresh
     window.dispatchEvent(new CustomEvent('profile-updated'));
 
     onOpenChange(false);

@@ -71,14 +71,6 @@ const Profile = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <h1 className="text-lg sm:text-xl font-bold">Profile</h1>
-        <div className="flex space-x-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/progress')}>
-            <BarChart3 className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
-            <Settings className="w-5 h-5" />
-          </Button>
-        </div>
       </div>
 
       {/* Profile Content */}
@@ -103,20 +95,26 @@ const Profile = () => {
                 </p>
               </div>
 
-              {profile?.bmi && (
-                <div className="flex items-center justify-center gap-4 p-3 bg-muted rounded-lg w-full">
+              <div className="grid grid-cols-3 gap-2 p-3 bg-muted rounded-lg w-full">
+                {profile?.age && (
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Age</p>
+                    <p className="text-lg font-bold">{profile.age}</p>
+                  </div>
+                )}
+                {profile?.weight_kg && (
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Weight</p>
+                    <p className="text-lg font-bold">{profile.weight_kg} kg</p>
+                  </div>
+                )}
+                {profile?.bmi && (
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground">BMI</p>
                     <p className="text-lg font-bold">{profile.bmi}</p>
                   </div>
-                  {profile.weight_kg && (
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground">Weight</p>
-                      <p className="text-lg font-bold">{profile.weight_kg} kg</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
 
               <Button 
                 variant="outline" 

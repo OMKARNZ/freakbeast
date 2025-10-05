@@ -5,13 +5,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Dumbbell, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 
 const Auth = () => {
   const { user, loading, signIn, signUp } = useAuth();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   // Redirect if already authenticated
   if (!loading && user) {
@@ -41,6 +47,34 @@ const Auth = () => {
     
     await signUp(email, password, fullName);
     setIsLoading(false);
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Check your email",
+      description: "Password reset link has been sent to your email.",
+    });
+
+    setShowForgotPassword(false);
+    setResetEmail('');
   };
 
   if (loading) {
@@ -122,6 +156,14 @@ const Auth = () => {
                     >
                       {isLoading ? 'Signing in...' : 'Sign In'}
                     </Button>
+                    <Button 
+                      type="button"
+                      variant="link"
+                      className="w-full text-sm"
+                      onClick={() => setShowForgotPassword(true)}
+                    >
+                      Forgot Password?
+                    </Button>
                   </form>
                 </TabsContent>
                 
@@ -172,6 +214,48 @@ const Auth = () => {
           </Card>
         </div>
       </div>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <DialogContent className="sm:max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Enter your email address and we'll send you a link to reset your password
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email">Email</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowForgotPassword(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Sending...' : 'Send Reset Link'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

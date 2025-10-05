@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { EditProfileDialog } from '@/components/EditProfileDialog';
 import { useTheme } from '@/contexts/ThemeContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const Settings = () => {
   const { signOut } = useAuth();
@@ -24,12 +25,25 @@ const Settings = () => {
   const [showHelpCenter, setShowHelpCenter] = useState(false);
 
   const handleDeleteAccount = async () => {
-    // TODO: Implement account deletion with backend
-    toast({
-      title: "Account Deletion Requested",
-      description: "Your account deletion request has been submitted. Contact support for assistance.",
-    });
-    setShowDeleteDialog(false);
+    try {
+      const { error } = await supabase.functions.invoke('delete-account');
+      
+      if (error) throw error;
+
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted.",
+      });
+      
+      setShowDeleteDialog(false);
+      await signOut();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete account. Please contact support.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleNotificationChange = (key: string, value: boolean) => {

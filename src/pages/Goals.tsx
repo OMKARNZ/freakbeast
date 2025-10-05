@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Target, TrendingUp, Calendar, Trophy, Play, Trash2 } from 'lucide-react';
+import { Plus, Target, TrendingUp, Calendar, Trophy, Play, Trash2, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,8 +19,10 @@ const Goals = () => {
   const [goals, setGoals] = useState([]);
   const [showNewGoalDialog, setShowNewGoalDialog] = useState(false);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<any>(null);
   const [progressValue, setProgressValue] = useState('');
+  const [renameTitle, setRenameTitle] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -207,6 +209,41 @@ const Goals = () => {
       description: "Goal has been deleted successfully.",
     });
     
+    fetchGoals();
+  };
+
+  const handleRenameGoal = (goal: any) => {
+    setSelectedGoal(goal);
+    setRenameTitle(goal.title);
+    setShowRenameDialog(true);
+  };
+
+  const handleRenameSubmit = async () => {
+    if (!selectedGoal || !renameTitle.trim()) return;
+
+    const { error } = await supabase
+      .from('fitness_goals')
+      .update({ title: renameTitle })
+      .eq('id', selectedGoal.id)
+      .eq('user_id', user?.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to rename goal. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Goal renamed successfully!",
+    });
+    
+    setShowRenameDialog(false);
+    setSelectedGoal(null);
+    setRenameTitle('');
     fetchGoals();
   };
 
@@ -489,27 +526,30 @@ const Goals = () => {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
+                      {goal.status === 'planned' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="w-full sm:w-auto"
+                          onClick={() => handleStartGoal(goal.id)}
+                        >
+                          <Play className="w-4 h-4 mr-1" />
+                          Start Goal
+                        </Button>
+                      )}
+
                       <Button 
                         variant="outline" 
                         size="sm"
                         className="w-full sm:w-auto"
-                        onClick={() => handleStartGoal(goal.id)}
-                        disabled={goal.status === 'completed'}
+                        onClick={() => handleRenameGoal(goal)}
                       >
-                        <Play className="w-4 h-4 mr-1" />
-                        {goal.status === 'completed' ? 'Completed' : 'Start Goal'}
+                        <Edit2 className="w-4 h-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Rename</span>
+                        <span className="sm:hidden">Rename</span>
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="w-full sm:w-auto"
-                        onClick={() => handleUpdateProgress(goal.id)}
-                        disabled={goal.status === 'completed'}
-                      >
-                        <TrendingUp className="w-4 h-4 mr-1" />
-                        Update Progress
-                      </Button>
-                      {goal.status !== 'completed' && (
+                    
+                      {goal.status === 'active' && (
                         <Button 
                           variant="default" 
                           size="sm"
@@ -520,6 +560,19 @@ const Goals = () => {
                           Mark Done
                         </Button>
                       )}
+
+                      {goal.status === 'active' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="w-full sm:w-auto"
+                          onClick={() => handleUpdateProgress(goal.id)}
+                        >
+                          <TrendingUp className="w-4 h-4 mr-1" />
+                          Update
+                        </Button>
+                      )}
+
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="outline" size="sm" className="w-full sm:w-auto">
