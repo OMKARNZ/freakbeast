@@ -437,21 +437,6 @@ const Workouts = () => {
                 </form>
               </DialogContent>
             </Dialog>
-
-            {/* Quick Actions */}
-            <div className="mt-8 flex justify-center">
-              <div className="bg-primary rounded-full p-4 flex items-center space-x-6">
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  className="text-primary-foreground hover:bg-primary-foreground/20"
-                  onClick={navigateToExercises}
-                >
-                  <Plus className="w-5 h-5" />
-                </Button>
-                {/* Removed extra buttons per user request - keeping only Add */}
-              </div>
-            </div>
           </div>
         ) : (
           /* Routines List */
