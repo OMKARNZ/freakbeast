@@ -74,93 +74,99 @@ const Profile = () => {
       </div>
 
       {/* Profile Content */}
-      <div className="flex-1 p-4 space-y-6">
-        {/* User Info Card */}
-        <Card className="bg-gradient-card">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center space-y-4">
-              <Avatar className="w-20 h-20 sm:w-24 sm:h-24">
-                <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-muted text-2xl">
-                  <User className="w-8 h-8" />
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="text-center space-y-2">
-                <h2 className="text-lg sm:text-xl font-semibold">
-                  {profile?.full_name || user?.user_metadata?.full_name || 'Anonymous user'}
-                </h2>
-                <p className="text-muted-foreground text-sm">
-                  {user?.email}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 p-3 bg-muted rounded-lg w-full">
-                {profile?.age && (
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Age</p>
-                    <p className="text-lg font-bold">{profile.age}</p>
-                  </div>
-                )}
-                {profile?.weight_kg && (
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Weight</p>
-                    <p className="text-lg font-bold">{profile.weight_kg} kg</p>
-                  </div>
-                )}
-                {profile?.bmi && (
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">BMI</p>
-                    <p className="text-lg font-bold">{profile.bmi}</p>
-                  </div>
-                )}
-              </div>
-
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowBMIDialog(true)}
-                className="w-full sm:w-auto"
-              >
-                <Calculator className="w-4 h-4 mr-2" />
-                {profile?.bmi ? 'Update BMI' : 'Calculate BMI'}
-              </Button>
+      <div className="flex-1 space-y-6">
+        {/* User Info Header - Prominent Display */}
+        <div className="bg-background border-b border-border py-8">
+          <div className="flex flex-col items-center space-y-3 px-4">
+            <Avatar className="w-24 h-24 sm:w-28 sm:h-28 border-4 border-primary/10">
+              <AvatarImage src={profile?.avatar_url || user?.user_metadata?.avatar_url} />
+              <AvatarFallback className="bg-muted">
+                <User className="w-12 h-12" />
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl sm:text-3xl font-bold">
+                {profile?.full_name || user?.user_metadata?.full_name || 'Anonymous user'}
+              </h2>
+              <p className="text-muted-foreground">
+                {user?.email}
+              </p>
             </div>
-          </CardContent>
-        </Card>
-
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center space-y-1">
-                <p className="text-xl sm:text-2xl font-bold text-primary">{stats.workouts}</p>
-                <p className="text-xs text-muted-foreground">Workouts</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center space-y-1">
-                <p className="text-xl sm:text-2xl font-bold text-primary">{stats.goals}</p>
-                <p className="text-xs text-muted-foreground">Goals</p>
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
+        <div className="px-4 space-y-6">
+          {/* Profile Details Card */}
+          {(profile?.age || profile?.weight_kg || profile?.bmi) && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-3 gap-4">
+                  {profile?.age && (
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Age</p>
+                      <p className="text-2xl font-bold">{profile.age}</p>
+                    </div>
+                  )}
+                  {profile?.weight_kg && (
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Weight</p>
+                      <p className="text-2xl font-bold">{profile.weight_kg}</p>
+                      <p className="text-xs text-muted-foreground">kg</p>
+                    </div>
+                  )}
+                  {profile?.bmi && (
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-1">BMI</p>
+                      <p className="text-2xl font-bold">{profile.bmi}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Sign Out */}
-        <div className="pt-4">
           <Button 
             variant="outline" 
-            className="w-full" 
-            onClick={handleSignOut}
+            size="sm" 
+            onClick={() => setShowBMIDialog(true)}
+            className="w-full"
           >
-            Sign Out
+            <Calculator className="w-4 h-4 mr-2" />
+            {profile?.bmi ? 'Update BMI' : 'Calculate BMI'}
           </Button>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <Card>
+              <CardContent className="pt-6 pb-6">
+                <div className="text-center space-y-1">
+                  <p className="text-3xl font-bold text-primary">{stats.workouts}</p>
+                  <p className="text-sm text-muted-foreground">Workouts</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="pt-6 pb-6">
+                <div className="text-center space-y-1">
+                  <p className="text-3xl font-bold text-primary">{stats.goals}</p>
+                  <p className="text-sm text-muted-foreground">Goals</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sign Out */}
+          <div className="pt-4">
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleSignOut}
+            >
+              Sign Out
+            </Button>
+          </div>
         </div>
       </div>
 
