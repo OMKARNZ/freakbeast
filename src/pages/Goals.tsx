@@ -3,7 +3,7 @@ import { Plus, Target, TrendingUp, Calendar, Trophy, Play, Trash2, Edit2 } from 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -219,11 +219,20 @@ const Goals = () => {
   };
 
   const handleRenameSubmit = async () => {
-    if (!selectedGoal || !renameTitle.trim()) return;
+    if (!selectedGoal) return;
+    
+    if (!renameTitle.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Goal title cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const { error } = await supabase
       .from('fitness_goals')
-      .update({ title: renameTitle })
+      .update({ title: renameTitle.trim() })
       .eq('id', selectedGoal.id)
       .eq('user_id', user?.id);
 
@@ -262,6 +271,9 @@ const Goals = () => {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Create New Goal</DialogTitle>
+              <DialogDescription>
+                Set a new fitness goal to track your progress and stay motivated.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateGoal} className="space-y-4">
               <div className="space-y-2">
@@ -389,6 +401,9 @@ const Goals = () => {
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Create New Goal</DialogTitle>
+                  <DialogDescription>
+                    Set a new fitness goal to track your progress and stay motivated.
+                  </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleCreateGoal} className="space-y-4">
                   <div className="space-y-2">
@@ -606,11 +621,68 @@ const Goals = () => {
           </div>
         )}
 
+        {/* Rename Goal Dialog */}
+        <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Rename Goal</DialogTitle>
+              <DialogDescription>
+                Update the title of your goal.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="rename-title">Goal Title</Label>
+                <Input
+                  id="rename-title"
+                  value={renameTitle}
+                  onChange={(e) => setRenameTitle(e.target.value)}
+                  placeholder="Enter new goal title"
+                  maxLength={100}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleRenameSubmit();
+                    }
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {renameTitle.length}/100 characters
+                </p>
+              </div>
+              <div className="flex space-x-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    setShowRenameDialog(false);
+                    setRenameTitle('');
+                    setSelectedGoal(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleRenameSubmit} 
+                  className="flex-1"
+                  disabled={!renameTitle.trim()}
+                >
+                  Save
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Update Progress Dialog */}
         <Dialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Update Progress</DialogTitle>
+              <DialogDescription>
+                Update your current progress towards this goal.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
