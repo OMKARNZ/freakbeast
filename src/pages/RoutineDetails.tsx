@@ -277,15 +277,14 @@ const RoutineDetails = () => {
     const exerciseNameMap: { [key: string]: string } = {};
     
     for (const planEx of planExercises) {
-      const { data: matchedEx } = await supabase
+      const { data: matchedExercises } = await supabase
         .from('exercises')
         .select('id')
         .ilike('name', `%${planEx.name}%`)
-        .limit(1)
-        .single();
+        .limit(1);
       
-      if (matchedEx) {
-        exerciseNameMap[planEx.name] = matchedEx.id;
+      if (matchedExercises && matchedExercises.length > 0) {
+        exerciseNameMap[planEx.name] = matchedExercises[0].id;
       }
     }
 
