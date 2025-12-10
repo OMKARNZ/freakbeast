@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Download, BarChart3, TrendingUp, CalendarDays, Dumbbell } from 'lucide-react';
+import { Calendar, Download, BarChart3, TrendingUp, CalendarDays, Dumbbell, Flame, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,24 +19,68 @@ const Progress = () => {
   const [routineCount, setRoutineCount] = useState(0);
   const [completedWorkoutDates, setCompletedWorkoutDates] = useState<Date[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
+  const [caloriesData, setCaloriesData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>();
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [totalCalories, setTotalCalories] = useState(0);
 
   useEffect(() => {
     if (user) {
       fetchProgressData();
     }
-  }, [user]);
+  }, [user, weekOffset]);
+
+  const getWeekDates = (offset: number) => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay() - (offset * 7));
+    
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      return date;
+    });
+  };
+
+  const calculateCaloriesBurned = (durationMinutes: number, exerciseType: string = 'weights') => {
+    // Calories burned per minute based on exercise type (moderate intensity)
+    const caloriesPerMinute: { [key: string]: number } = {
+      'weights': 5,
+      'bodyweight': 6,
+      'cardio': 10,
+      'flexibility': 3,
+      'other': 5
+    };
+    
+    const rate = caloriesPerMinute[exerciseType] || 5;
+    return Math.round(durationMinutes * rate);
+  };
 
   const fetchProgressData = async () => {
     if (!user) return;
 
     try {
-      // Fetch completed workouts count
+      // Fetch all completed workouts with exercise details
       const { data: workouts, error: workoutError } = await supabase
         .from('workouts')
-        .select('id, completed_at')
+        .select(`
+          id, 
+          completed_at, 
+          total_duration_minutes,
+          calories_burned,
+          workout_exercises (
+            id,
+            sets_completed,
+            actual_reps,
+            actual_weight_kg,
+            actual_duration_seconds,
+            exercises (
+              exercise_type
+            )
+          )
+        `)
         .eq('user_id', user.id)
         .eq('status', 'completed');
 
@@ -53,7 +97,7 @@ const Progress = () => {
       if (routineError) throw routineError;
       setRoutineCount(routines?.length || 0);
 
-      // Calculate streak and workout dates
+      // Calculate streak, workout dates, and calorie data
       if (workouts && workouts.length > 0) {
         const completedDates = workouts
           .map(w => new Date(w.completed_at))
@@ -62,6 +106,7 @@ const Progress = () => {
         
         setCompletedWorkoutDates(completedDates);
         
+        // Calculate streak
         const uniqueDateStrings = [...new Set(completedDates.map(d => d.toDateString()))];
         let streak = 0;
         const today = new Date();
@@ -80,30 +125,67 @@ const Progress = () => {
         
         setCurrentStreak(streak);
 
-        // Generate weekly data for graph
-        const last7Days = Array.from({ length: 7 }, (_, i) => {
-          const date = new Date();
-          date.setDate(date.getDate() - (6 - i));
-          return date;
-        });
+        // Generate weekly data for the selected week
+        const weekDates = getWeekDates(weekOffset);
 
-        const chartData = last7Days.map(date => {
-          const dayWorkouts = completedDates.filter(
-            d => d.toDateString() === date.toDateString()
-          ).length;
+        const chartData = weekDates.map(date => {
+          const dayWorkouts = workouts.filter(
+            w => new Date(w.completed_at).toDateString() === date.toDateString()
+          );
+          
+          // Calculate calories for each workout
+          let dayCalories = 0;
+          dayWorkouts.forEach(workout => {
+            if (workout.calories_burned) {
+              dayCalories += workout.calories_burned;
+            } else if (workout.total_duration_minutes) {
+              // Calculate based on duration and exercise types
+              const exerciseTypes = workout.workout_exercises?.map(
+                (we: any) => we.exercises?.exercise_type
+              ).filter(Boolean) || [];
+              
+              const avgCaloriesPerMin = exerciseTypes.length > 0
+                ? exerciseTypes.reduce((sum: number, type: string) => {
+                    const rates: { [key: string]: number } = { weights: 5, bodyweight: 6, cardio: 10, flexibility: 3, other: 5 };
+                    return sum + (rates[type] || 5);
+                  }, 0) / exerciseTypes.length
+                : 5;
+              
+              dayCalories += Math.round(workout.total_duration_minutes * avgCaloriesPerMin);
+            }
+          });
+
           return {
             date: date.toLocaleDateString('en-US', { weekday: 'short' }),
-            workouts: dayWorkouts
+            fullDate: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            workouts: dayWorkouts.length,
+            calories: dayCalories
           };
         });
 
         setWeeklyData(chartData);
+        setCaloriesData(chartData);
+        
+        // Calculate total calories for the week
+        const weekTotal = chartData.reduce((sum, day) => sum + day.calories, 0);
+        setTotalCalories(weekTotal);
       }
     } catch (error) {
       console.error('Error fetching progress data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getWeekLabel = () => {
+    const weekDates = getWeekDates(weekOffset);
+    const startDate = weekDates[0];
+    const endDate = weekDates[6];
+    
+    if (weekOffset === 0) return 'This Week';
+    if (weekOffset === 1) return 'Last Week';
+    
+    return `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   };
 
   const exportPDF = async () => {
@@ -115,26 +197,24 @@ const Progress = () => {
 
       pdf.setFontSize(12);
       pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 40, 80);
+      pdf.text(`Week: ${getWeekLabel()}`, 40, 100);
 
       pdf.setFontSize(14);
-      pdf.text('Statistics:', 40, 110);
+      pdf.text('Statistics:', 40, 130);
 
       pdf.setFontSize(12);
-      pdf.text(`Total Workouts Completed: ${workoutCount}`, 50, 130);
-      pdf.text(`Current Streak: ${currentStreak} days`, 50, 150);
-      pdf.text(`Total Routines Created: ${routineCount}`, 50, 170);
+      pdf.text(`Total Workouts Completed: ${workoutCount}`, 50, 150);
+      pdf.text(`Current Streak: ${currentStreak} days`, 50, 170);
+      pdf.text(`Total Routines Created: ${routineCount}`, 50, 190);
+      pdf.text(`Weekly Calories Burned: ${totalCalories} cal`, 50, 210);
 
-      if (completedWorkoutDates.length > 0) {
-        pdf.text('Recent Workout Dates:', 40, 200);
-        const recentWorkouts = completedWorkoutDates
-          .slice(-10)
-          .map(date => date.toLocaleDateString())
-          .join(', ');
-        const lines = pdf.splitTextToSize(recentWorkouts, 500);
-        pdf.text(lines, 50, 220);
+      if (caloriesData.length > 0) {
+        pdf.text('Daily Breakdown:', 40, 240);
+        caloriesData.forEach((day, index) => {
+          pdf.text(`${day.fullDate}: ${day.workouts} workout(s), ${day.calories} calories`, 50, 260 + (index * 20));
+        });
       }
 
-      // Mobile-friendly download
       const blob = pdf.output('blob');
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -146,14 +226,7 @@ const Progress = () => {
       URL.revokeObjectURL(url);
     } catch (e) {
       console.error('Failed to export PDF', e);
-      // no toast hook here; log only
     }
-  };
-
-  const isWorkoutDate = (date: Date) => {
-    return completedWorkoutDates.some(workoutDate => 
-      workoutDate.toDateString() === date.toDateString()
-    );
   };
 
   return (
@@ -167,20 +240,27 @@ const Progress = () => {
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="p-4 border-b border-border space-y-4">
-        <div className="flex space-x-4">
-          <Select defaultValue="week">
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Time Period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-              <SelectItem value="quarter">This Quarter</SelectItem>
-              <SelectItem value="year">This Year</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Week Navigation */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setWeekOffset(prev => prev + 1)}
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Previous
+          </Button>
+          <span className="font-medium text-sm">{getWeekLabel()}</span>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
+            disabled={weekOffset === 0}
+          >
+            Next
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
         </div>
       </div>
 
@@ -188,87 +268,101 @@ const Progress = () => {
       <div className="flex-1 p-4 space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-4">
-          <Card>
+          <Card className="card-premium">
             <CardContent className="pt-4">
               <div className="flex items-center space-x-2">
-                <BarChart3 className="w-4 h-4 text-primary" />
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Workouts</p>
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">Total Workouts</p>
                   <p className="text-lg font-bold">{loading ? '...' : workoutCount}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="card-premium">
             <CardContent className="pt-4">
               <div className="flex items-center space-x-2">
-                <TrendingUp className="w-4 h-4 text-success" />
-                <div className="space-y-1">
+                <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-success" />
+                </div>
+                <div className="space-y-0.5">
                   <p className="text-xs text-muted-foreground">Streak</p>
                   <p className="text-lg font-bold">{loading ? '...' : currentStreak} days</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Additional Stats */}
-        <div className="grid grid-cols-1 gap-4">
-          <Card>
+          <Card className="card-premium">
             <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Routines Created</p>
-                    <p className="text-lg font-bold">{loading ? '...' : routineCount}</p>
-                  </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center">
+                  <Flame className="w-5 h-5 text-warning" />
                 </div>
-                <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <CalendarDays className="w-4 h-4 mr-2" />
-                      View Calendar
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Workout Calendar</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <CalendarComponent
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        modifiers={{
-                          workout: completedWorkoutDates
-                        }}
-                        modifiersStyles={{
-                          workout: { backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }
-                        }}
-                        className="rounded-md border p-3 pointer-events-auto"
-                      />
-                      <p className="text-sm text-muted-foreground text-center">
-                        Highlighted dates show completed workouts
-                      </p>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">Week Calories</p>
+                  <p className="text-lg font-bold">{loading ? '...' : totalCalories}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-premium">
+            <CardContent className="pt-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-10 h-10 bg-info/10 rounded-xl flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-info" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">Routines</p>
+                  <p className="text-lg font-bold">{loading ? '...' : routineCount}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Calendar Button */}
+        <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full">
+              <CalendarDays className="w-4 h-4 mr-2" />
+              View Workout Calendar
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Workout Calendar</DialogTitle>
+              <DialogDescription>
+                Highlighted dates show completed workouts
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <CalendarComponent
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                modifiers={{
+                  workout: completedWorkoutDates
+                }}
+                modifiersStyles={{
+                  workout: { backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }
+                }}
+                className="rounded-md border p-3 pointer-events-auto"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Empty State */}
         {workoutCount === 0 && !loading && (
           <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
             <div className="relative">
-              <div className="w-24 h-24 bg-gradient-card rounded-full flex items-center justify-center shadow-card">
+              <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-pink-500/20 rounded-full flex items-center justify-center">
                 <BarChart3 className="w-12 h-12 text-primary" />
-              </div>
-              <div className="absolute -top-2 -right-2 w-8 h-8 bg-success rounded-full flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-success-foreground" />
               </div>
             </div>
             
@@ -280,7 +374,7 @@ const Progress = () => {
             </div>
 
             <Button variant="outline" className="w-full max-w-xs" onClick={() => navigate('/workouts')}>
-              <Calendar className="w-4 h-4 mr-2" />
+              <Dumbbell className="w-4 h-4 mr-2" />
               Start Your First Workout
             </Button>
           </div>
@@ -288,25 +382,26 @@ const Progress = () => {
 
         {/* Weekly Progress Chart */}
         {workoutCount > 0 && weeklyData.length > 0 && (
-          <Card>
+          <Card className="card-premium">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Dumbbell className="w-5 h-5" />
-                <span>Weekly Progress</span>
+              <CardTitle className="flex items-center space-x-2 text-base">
+                <Dumbbell className="w-5 h-5 text-primary" />
+                <span>Weekly Workouts</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={weeklyData}>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={weeklyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="date" 
                     stroke="hsl(var(--muted-foreground))"
-                    style={{ fontSize: '12px' }}
+                    style={{ fontSize: '11px' }}
                   />
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))"
-                    style={{ fontSize: '12px' }}
+                    style={{ fontSize: '11px' }}
+                    allowDecimals={false}
                   />
                   <Tooltip 
                     contentStyle={{
@@ -314,16 +409,91 @@ const Progress = () => {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }}
+                    formatter={(value: any) => [`${value} workout(s)`, 'Count']}
+                  />
+                  <Bar 
+                    dataKey="workouts" 
+                    fill="hsl(var(--primary))" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Calories Chart */}
+        {workoutCount > 0 && caloriesData.length > 0 && (
+          <Card className="card-premium">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-base">
+                <Flame className="w-5 h-5 text-warning" />
+                <span>Daily Calories Burned</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={caloriesData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))"
+                    style={{ fontSize: '11px' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    style={{ fontSize: '11px' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                    formatter={(value: any) => [`${value} cal`, 'Calories']}
                   />
                   <Line 
                     type="monotone" 
-                    dataKey="workouts" 
-                    stroke="hsl(var(--primary))" 
+                    dataKey="calories" 
+                    stroke="hsl(var(--warning))" 
                     strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))' }}
+                    dot={{ fill: 'hsl(var(--warning))' }}
                   />
                 </LineChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Daily Breakdown */}
+        {workoutCount > 0 && caloriesData.length > 0 && (
+          <Card className="card-premium">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-base">
+                <Activity className="w-5 h-5 text-info" />
+                <span>Daily Breakdown</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {caloriesData.map((day, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm font-medium w-20">{day.fullDate}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {day.workouts} workout{day.workouts !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-warning">
+                      <Flame className="w-4 h-4" />
+                      <span className="text-sm font-medium">{day.calories} cal</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
