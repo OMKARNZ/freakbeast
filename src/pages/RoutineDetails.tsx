@@ -273,45 +273,58 @@ const RoutineDetails = () => {
   };
 
   const handleApplyPredefinedPlan = async (planExercises: any[], targetDayId: string) => {
-    // Match predefined exercise names to actual exercise IDs from database
-    const exerciseNameMap: { [key: string]: string } = {};
+    // Fetch all exercises from database first
+    const { data: allExercises, error: fetchError } = await supabase
+      .from('exercises')
+      .select('id, name');
     
-    for (const planEx of planExercises) {
-      const { data: matchedExercises } = await supabase
-        .from('exercises')
-        .select('id')
-        .ilike('name', `%${planEx.name}%`)
-        .limit(1);
+    if (fetchError || !allExercises) {
+      throw new Error('Failed to fetch exercises');
+    }
+
+    // Match predefined exercise names to actual exercise IDs
+    const exercisesToInsert: any[] = [];
+    const currentOrderIndex = routineExercises[targetDayId]?.length || 0;
+    
+    for (let i = 0; i < planExercises.length; i++) {
+      const planEx = planExercises[i];
       
-      if (matchedExercises && matchedExercises.length > 0) {
-        exerciseNameMap[planEx.name] = matchedExercises[0].id;
+      // Find matching exercise (case-insensitive partial match)
+      const matchedExercise = allExercises.find(ex => 
+        ex.name.toLowerCase().includes(planEx.name.toLowerCase()) ||
+        planEx.name.toLowerCase().includes(ex.name.toLowerCase())
+      );
+      
+      if (matchedExercise) {
+        exercisesToInsert.push({
+          daily_routine_id: targetDayId,
+          exercise_id: matchedExercise.id,
+          order_index: currentOrderIndex + i + 1,
+          sets: planEx.sets,
+          reps: planEx.reps,
+          rest_seconds: planEx.rest,
+          notes: null,
+          weight_kg: null,
+          duration_seconds: null
+        });
       }
     }
 
-    // Insert exercises for the target day
-    const exercisesToInsert = planExercises
-      .filter(ex => exerciseNameMap[ex.name])
-      .map((ex, index) => ({
-        daily_routine_id: targetDayId,
-        exercise_id: exerciseNameMap[ex.name],
-        order_index: (routineExercises[targetDayId]?.length || 0) + index + 1,
-        sets: ex.sets,
-        reps: ex.reps,
-        rest_seconds: ex.rest,
-        notes: null,
-        weight_kg: null,
-        duration_seconds: null
-      }));
-
     if (exercisesToInsert.length === 0) {
-      throw new Error('No matching exercises found');
+      throw new Error('No matching exercises found in database');
     }
 
+    // Insert all exercises at once
     const { error } = await supabase
       .from('routine_exercises')
       .insert(exercisesToInsert);
 
     if (error) throw error;
+
+    toast({
+      title: "Success",
+      description: `Added ${exercisesToInsert.length} exercises to the routine!`,
+    });
 
     fetchRoutineDetails();
   };

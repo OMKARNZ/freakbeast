@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
+import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Workouts from "@/pages/Workouts";
 import Goals from "@/pages/Goals";
@@ -44,13 +45,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/verification-success" element={<VerificationSuccess />} />
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Workouts />
-            </ProtectedRoute>
-          } />
           <Route path="/workouts" element={
             <ProtectedRoute>
               <Workouts />
@@ -96,11 +93,7 @@ const App = () => (
               <ExerciseCatalog />
             </ProtectedRoute>
           } />
-          <Route path="*" element={
-            <ProtectedRoute>
-              <NotFound />
-            </ProtectedRoute>
-          } />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
