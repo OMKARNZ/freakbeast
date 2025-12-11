@@ -1,34 +1,43 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Download, BarChart3, TrendingUp, CalendarDays, Dumbbell, Flame, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+import { Calendar, Download, BarChart3, TrendingUp, CalendarDays, Dumbbell, Flame, ChevronLeft, ChevronRight, Activity, Scale, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const Progress = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [workoutCount, setWorkoutCount] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [routineCount, setRoutineCount] = useState(0);
   const [completedWorkoutDates, setCompletedWorkoutDates] = useState<Date[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [caloriesData, setCaloriesData] = useState<any[]>([]);
+  const [weightData, setWeightData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showWeightDialog, setShowWeightDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [weekOffset, setWeekOffset] = useState(0);
   const [totalCalories, setTotalCalories] = useState(0);
+  const [currentWeight, setCurrentWeight] = useState<number | null>(null);
+  const [newWeight, setNewWeight] = useState('');
+  const [savingWeight, setSavingWeight] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchProgressData();
+      fetchWeightHistory();
     }
   }, [user, weekOffset]);
 
@@ -44,25 +53,75 @@ const Progress = () => {
     });
   };
 
-  const calculateCaloriesBurned = (durationMinutes: number, exerciseType: string = 'weights') => {
-    // Calories burned per minute based on exercise type (moderate intensity)
-    const caloriesPerMinute: { [key: string]: number } = {
-      'weights': 5,
-      'bodyweight': 6,
-      'cardio': 10,
-      'flexibility': 3,
-      'other': 5
-    };
-    
-    const rate = caloriesPerMinute[exerciseType] || 5;
-    return Math.round(durationMinutes * rate);
+  const fetchWeightHistory = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('weight_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('recorded_at', { ascending: true })
+        .limit(30);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const chartData = data.map(entry => ({
+          date: new Date(entry.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          weight: parseFloat(entry.weight_kg.toString())
+        }));
+        setWeightData(chartData);
+        setCurrentWeight(parseFloat(data[data.length - 1].weight_kg.toString()));
+      }
+    } catch (error) {
+      console.error('Error fetching weight history:', error);
+    }
+  };
+
+  const handleAddWeight = async () => {
+    if (!user || !newWeight) return;
+
+    const weight = parseFloat(newWeight);
+    if (isNaN(weight) || weight <= 0) {
+      toast({ title: "Invalid weight", description: "Please enter a valid weight.", variant: "destructive" });
+      return;
+    }
+
+    setSavingWeight(true);
+    try {
+      const { error } = await supabase
+        .from('weight_history')
+        .insert({
+          user_id: user.id,
+          weight_kg: weight,
+          recorded_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      // Also update profile weight
+      await supabase
+        .from('profiles')
+        .update({ weight_kg: weight, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
+
+      toast({ title: "Weight recorded!", description: `${weight} kg has been saved.` });
+      setShowWeightDialog(false);
+      setNewWeight('');
+      fetchWeightHistory();
+    } catch (error) {
+      console.error('Error saving weight:', error);
+      toast({ title: "Error", description: "Failed to save weight.", variant: "destructive" });
+    } finally {
+      setSavingWeight(false);
+    }
   };
 
   const fetchProgressData = async () => {
     if (!user) return;
 
     try {
-      // Fetch all completed workouts with exercise details
       const { data: workouts, error: workoutError } = await supabase
         .from('workouts')
         .select(`
@@ -88,7 +147,6 @@ const Progress = () => {
 
       setWorkoutCount(workouts?.length || 0);
 
-      // Fetch routines count
       const { data: routines, error: routineError } = await supabase
         .from('workout_routines')
         .select('id')
@@ -97,7 +155,6 @@ const Progress = () => {
       if (routineError) throw routineError;
       setRoutineCount(routines?.length || 0);
 
-      // Calculate streak, workout dates, and calorie data
       if (workouts && workouts.length > 0) {
         const completedDates = workouts
           .map(w => new Date(w.completed_at))
@@ -106,7 +163,6 @@ const Progress = () => {
         
         setCompletedWorkoutDates(completedDates);
         
-        // Calculate streak
         const uniqueDateStrings = [...new Set(completedDates.map(d => d.toDateString()))];
         let streak = 0;
         const today = new Date();
@@ -125,7 +181,6 @@ const Progress = () => {
         
         setCurrentStreak(streak);
 
-        // Generate weekly data for the selected week
         const weekDates = getWeekDates(weekOffset);
 
         const chartData = weekDates.map(date => {
@@ -133,13 +188,11 @@ const Progress = () => {
             w => new Date(w.completed_at).toDateString() === date.toDateString()
           );
           
-          // Calculate calories for each workout
           let dayCalories = 0;
           dayWorkouts.forEach(workout => {
             if (workout.calories_burned) {
               dayCalories += workout.calories_burned;
             } else if (workout.total_duration_minutes) {
-              // Calculate based on duration and exercise types
               const exerciseTypes = workout.workout_exercises?.map(
                 (we: any) => we.exercises?.exercise_type
               ).filter(Boolean) || [];
@@ -166,7 +219,6 @@ const Progress = () => {
         setWeeklyData(chartData);
         setCaloriesData(chartData);
         
-        // Calculate total calories for the week
         const weekTotal = chartData.reduce((sum, day) => sum + day.calories, 0);
         setTotalCalories(weekTotal);
       }
@@ -207,11 +259,14 @@ const Progress = () => {
       pdf.text(`Current Streak: ${currentStreak} days`, 50, 170);
       pdf.text(`Total Routines Created: ${routineCount}`, 50, 190);
       pdf.text(`Weekly Calories Burned: ${totalCalories} cal`, 50, 210);
+      if (currentWeight) {
+        pdf.text(`Current Weight: ${currentWeight} kg`, 50, 230);
+      }
 
       if (caloriesData.length > 0) {
-        pdf.text('Daily Breakdown:', 40, 240);
+        pdf.text('Daily Breakdown:', 40, 260);
         caloriesData.forEach((day, index) => {
-          pdf.text(`${day.fullDate}: ${day.workouts} workout(s), ${day.calories} calories`, 50, 260 + (index * 20));
+          pdf.text(`${day.fullDate}: ${day.workouts} workout(s), ${day.calories} calories`, 50, 280 + (index * 20));
         });
       }
 
@@ -314,48 +369,86 @@ const Progress = () => {
             <CardContent className="pt-4">
               <div className="flex items-center space-x-2">
                 <div className="w-10 h-10 bg-info/10 rounded-xl flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-info" />
+                  <Scale className="w-5 h-5 text-info" />
                 </div>
                 <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">Routines</p>
-                  <p className="text-lg font-bold">{loading ? '...' : routineCount}</p>
+                  <p className="text-xs text-muted-foreground">Weight</p>
+                  <p className="text-lg font-bold">{currentWeight ? `${currentWeight} kg` : '--'}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Calendar Button */}
-        <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="w-full">
-              <CalendarDays className="w-4 h-4 mr-2" />
-              View Workout Calendar
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Workout Calendar</DialogTitle>
-              <DialogDescription>
-                Highlighted dates show completed workouts
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <CalendarComponent
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                modifiers={{
-                  workout: completedWorkoutDates
-                }}
-                modifiersStyles={{
-                  workout: { backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }
-                }}
-                className="rounded-md border p-3 pointer-events-auto"
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex-1">
+                <CalendarDays className="w-4 h-4 mr-2" />
+                Calendar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Workout Calendar</DialogTitle>
+                <DialogDescription>
+                  Highlighted dates show completed workouts
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  modifiers={{ workout: completedWorkoutDates }}
+                  modifiersStyles={{
+                    workout: { backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }
+                  }}
+                  className="rounded-md border p-3 pointer-events-auto"
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showWeightDialog} onOpenChange={setShowWeightDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex-1">
+                <Plus className="w-4 h-4 mr-2" />
+                Log Weight
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Log Body Weight</DialogTitle>
+                <DialogDescription>
+                  Track your weight progress over time
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="weight">Weight (kg)</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    step="0.1"
+                    placeholder="Enter your weight"
+                    value={newWeight}
+                    onChange={(e) => setNewWeight(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setShowWeightDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button className="flex-1" onClick={handleAddWeight} disabled={savingWeight}>
+                    {savingWeight ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
 
         {/* Empty State */}
         {workoutCount === 0 && !loading && (
@@ -378,6 +471,50 @@ const Progress = () => {
               Start Your First Workout
             </Button>
           </div>
+        )}
+
+        {/* Weight Tracking Chart */}
+        {weightData.length > 0 && (
+          <Card className="card-premium">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-base">
+                <Scale className="w-5 h-5 text-info" />
+                <span>Body Weight Tracking</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={weightData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))"
+                    style={{ fontSize: '11px' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    style={{ fontSize: '11px' }}
+                    domain={['dataMin - 2', 'dataMax + 2']}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                    formatter={(value: any) => [`${value} kg`, 'Weight']}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="weight" 
+                    stroke="hsl(var(--info))" 
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--info))' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         )}
 
         {/* Weekly Progress Chart */}
