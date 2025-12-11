@@ -36,7 +36,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       .from('profiles')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (data) {
       setFormData({
@@ -64,49 +64,82 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
     const height = parseFloat(formData.height_cm);
     const bmi = calculateBMI(weight, height);
 
-    // Update profiles table
-    const { error } = await supabase
-      .from('profiles')
-      .upsert(
-        {
-          user_id: user.id,
-          full_name: formData.full_name,
-          age: formData.age ? parseInt(formData.age) : null,
-          height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
-          weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
-          bmi: bmi ? parseFloat(bmi) : null
-        },
-        { onConflict: 'user_id' }
-      );
+    try {
+      // First check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    if (error) {
-      console.error('Profile update error:', error);
-      setLoading(false);
+      let error;
+
+      if (existingProfile) {
+        // Update existing profile
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            full_name: formData.full_name || null,
+            age: formData.age ? parseInt(formData.age) : null,
+            height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
+            weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
+            bmi: bmi ? parseFloat(bmi) : null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id);
+        error = updateError;
+      } else {
+        // Insert new profile
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            full_name: formData.full_name || null,
+            age: formData.age ? parseInt(formData.age) : null,
+            height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
+            weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
+            bmi: bmi ? parseFloat(bmi) : null
+          });
+        error = insertError;
+      }
+
+      if (error) {
+        console.error('Profile update error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update profile. Please try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Update auth metadata for consistency
+      await supabase.auth.updateUser({
+        data: { full_name: formData.full_name }
+      });
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully!",
+      });
+
+      // Notify Profile page to refresh
+      window.dispatchEvent(new CustomEvent('profile-updated'));
+
+      onOpenChange(false);
+    } catch (err) {
+      console.error('Profile save error:', err);
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: "An unexpected error occurred.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    // Update auth metadata for consistency
-    await supabase.auth.updateUser({
-      data: { full_name: formData.full_name }
-    });
-
-    setLoading(false);
-
-    toast({
-      title: "Success",
-      description: "Profile updated successfully!",
-    });
-
-    // Notify Profile page to refresh
-    window.dispatchEvent(new CustomEvent('profile-updated'));
-
-    onOpenChange(false);
   };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md mx-4">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -61,6 +61,56 @@ const predefinedPlans = [
       { name: 'Shoulder Press', sets: 3, reps: 10, rest: 60 },
       { name: 'Deadlifts', sets: 3, reps: 8, rest: 120 }
     ]
+  },
+  {
+    id: 'hiit',
+    name: 'HIIT Workout',
+    description: 'High Intensity Interval Training',
+    exercises: [
+      { name: 'Burpees', sets: 4, reps: 15, rest: 30 },
+      { name: 'Mountain Climbers', sets: 4, reps: 20, rest: 30 },
+      { name: 'Jump Squats', sets: 4, reps: 15, rest: 30 },
+      { name: 'High Knees', sets: 4, reps: 30, rest: 30 },
+      { name: 'Plank Jacks', sets: 4, reps: 20, rest: 30 }
+    ]
+  },
+  {
+    id: 'upperbody',
+    name: 'Upper Body',
+    description: 'Chest, Back, Shoulders, Arms',
+    exercises: [
+      { name: 'Bench Press', sets: 4, reps: 10, rest: 90 },
+      { name: 'Pull-ups', sets: 4, reps: 8, rest: 90 },
+      { name: 'Shoulder Press', sets: 3, reps: 12, rest: 60 },
+      { name: 'Barbell Rows', sets: 3, reps: 12, rest: 60 },
+      { name: 'Barbell Curls', sets: 3, reps: 12, rest: 45 },
+      { name: 'Tricep Dips', sets: 3, reps: 12, rest: 45 }
+    ]
+  },
+  {
+    id: 'core',
+    name: 'Core Workout',
+    description: 'Abs, Obliques, Lower Back',
+    exercises: [
+      { name: 'Plank', sets: 3, reps: 60, rest: 30 },
+      { name: 'Crunches', sets: 4, reps: 20, rest: 30 },
+      { name: 'Russian Twists', sets: 3, reps: 30, rest: 30 },
+      { name: 'Leg Raises', sets: 3, reps: 15, rest: 30 },
+      { name: 'Mountain Climbers', sets: 3, reps: 30, rest: 30 }
+    ]
+  },
+  {
+    id: 'lowerbody',
+    name: 'Lower Body',
+    description: 'Legs, Glutes, Calves',
+    exercises: [
+      { name: 'Squats', sets: 4, reps: 10, rest: 90 },
+      { name: 'Lunges', sets: 3, reps: 12, rest: 60 },
+      { name: 'Romanian Deadlifts', sets: 4, reps: 10, rest: 90 },
+      { name: 'Leg Press', sets: 3, reps: 12, rest: 60 },
+      { name: 'Calf Raises', sets: 4, reps: 15, rest: 45 },
+      { name: 'Glute Bridges', sets: 3, reps: 15, rest: 45 }
+    ]
   }
 ];
 
@@ -86,10 +136,6 @@ export function PredefinedPlansDialog({ open, onOpenChange, dailyRoutines, onApp
     setLoading(true);
     try {
       await onApplyPlan(plan.exercises, targetDay);
-      toast({
-        title: "Success",
-        description: `${plan.name} has been applied to your routine!`,
-      });
       onOpenChange(false);
       setSelectedPlan('');
       setTargetDay('');
@@ -108,9 +154,12 @@ export function PredefinedPlansDialog({ open, onOpenChange, dailyRoutines, onApp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md mx-4">
+      <DialogContent className="sm:max-w-md mx-4 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Apply Predefined Plan</DialogTitle>
+          <DialogDescription>
+            Select a workout plan and apply it to your routine
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -119,7 +168,7 @@ export function PredefinedPlansDialog({ open, onOpenChange, dailyRoutines, onApp
               <SelectTrigger>
                 <SelectValue placeholder="Choose a plan" />
               </SelectTrigger>
-              <SelectContent className="z-[60] bg-background">
+              <SelectContent className="z-[60] bg-background max-h-60">
                 {predefinedPlans.map(plan => (
                   <SelectItem key={plan.id} value={plan.id}>
                     {plan.name} - {plan.description}
@@ -133,7 +182,7 @@ export function PredefinedPlansDialog({ open, onOpenChange, dailyRoutines, onApp
             <Card className="bg-muted">
               <CardContent className="pt-4 space-y-2">
                 <p className="text-sm font-medium">{selectedPlanData.name}</p>
-                <ul className="text-xs text-muted-foreground space-y-1">
+                <ul className="text-xs text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
                   {selectedPlanData.exercises.map((ex, idx) => (
                     <li key={idx}>• {ex.name} - {ex.sets}x{ex.reps}</li>
                   ))}
