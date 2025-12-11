@@ -33,13 +33,15 @@ const Profile = () => {
   const fetchProfile = async () => {
     if (!user) return;
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    setProfile(data);
+    if (!error && data) {
+      setProfile(data);
+    }
   };
 
   const fetchStats = async () => {
