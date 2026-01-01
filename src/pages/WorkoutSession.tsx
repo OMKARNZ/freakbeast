@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Pause, Check, Timer, Square } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Check, Timer, Square, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,12 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSoundSettings } from '@/contexts/SoundSettingsContext';
 
 const WorkoutSession = () => {
   const { routineId, workoutId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { playTimerSound } = useSoundSettings();
   
   const [workout, setWorkout] = useState<any>(null);
   const [exercises, setExercises] = useState<any[]>([]);
@@ -126,6 +128,9 @@ const WorkoutSession = () => {
       });
       return;
     }
+    
+    // Play timer sound when workout starts
+    playTimerSound();
     
     setWorkoutStarted(true);
     setStartTime(new Date());
@@ -309,15 +314,18 @@ const WorkoutSession = () => {
       {/* Main Content */}
       <div className="flex-1 p-3 sm:p-4 space-y-4 sm:space-y-6">
         {!workoutStarted ? (
-          <div className="text-center space-y-4 sm:space-y-6 px-4">
-            <div className="space-y-2">
-              <h2 className="text-xl sm:text-2xl font-bold">Ready to start?</h2>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                You have {exercises.length} exercises in this routine
+          <div className="text-center space-y-6 sm:space-y-8 px-4 py-8">
+            <div className="space-y-3">
+              <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <Play className="w-10 h-10 text-primary" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gradient">Ready to Crush It?</h2>
+              <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
+                You have <span className="font-semibold text-primary">{exercises.length} exercises</span> in this routine. Let's make every rep count!
               </p>
             </div>
-            <Button onClick={startWorkout} size="lg" className="w-full max-w-xs mx-auto">
-              <Play className="w-4 h-4 mr-2" />
+            <Button onClick={startWorkout} size="lg" className="btn-gradient w-full max-w-xs mx-auto">
+              <Play className="w-5 h-5 mr-2" />
               Start Workout
             </Button>
           </div>
@@ -351,39 +359,74 @@ const WorkoutSession = () => {
 
             {/* Current Exercise */}
             {currentExercise && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base sm:text-lg">{currentExercise.exercises.name}</CardTitle>
+              <Card className="exercise-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start gap-4">
+                    {/* Exercise Image */}
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0 border border-border/50">
+                      {currentExercise.exercises.image_url ? (
+                        <img 
+                          src={currentExercise.exercises.image_url} 
+                          alt={currentExercise.exercises.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20">
+                          <Dumbbell className="w-8 h-8 text-primary/60" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg sm:text-xl text-gradient mb-1">
+                        {currentExercise.exercises.name}
+                      </CardTitle>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary" className="text-xs capitalize">
+                          {currentExercise.exercises.muscle_group?.replace('_', ' ')}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {currentExercise.exercises.exercise_type?.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Exercise Description */}
+                  {currentExercise.exercises.description && (
+                    <p className="text-sm text-muted-foreground">
+                      {currentExercise.exercises.description}
+                    </p>
+                  )}
+
                   <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Sets:</span>
-                      <span className="ml-2 font-medium">{currentExercise.sets}</span>
+                    <div className="stat-card">
+                      <span className="text-muted-foreground text-xs">Sets</span>
+                      <p className="font-bold text-lg">{currentExercise.sets}</p>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Reps:</span>
-                      <span className="ml-2 font-medium">{currentExercise.reps || 'N/A'}</span>
+                    <div className="stat-card">
+                      <span className="text-muted-foreground text-xs">Reps</span>
+                      <p className="font-bold text-lg">{currentExercise.reps || 'N/A'}</p>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Weight:</span>
-                      <span className="ml-2 font-medium">{currentExercise.weight_kg ? `${currentExercise.weight_kg} kg` : 'Bodyweight'}</span>
+                    <div className="stat-card">
+                      <span className="text-muted-foreground text-xs">Weight</span>
+                      <p className="font-bold text-lg">{currentExercise.weight_kg ? `${currentExercise.weight_kg} kg` : 'Bodyweight'}</p>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Rest:</span>
-                      <span className="ml-2 font-medium">{currentExercise.rest_seconds}s</span>
+                    <div className="stat-card">
+                      <span className="text-muted-foreground text-xs">Rest</span>
+                      <p className="font-bold text-lg">{currentExercise.rest_seconds}s</p>
                     </div>
                   </div>
 
                   {currentExercise.notes && (
-                    <div className="p-3 bg-muted rounded-lg">
+                    <div className="p-3 bg-accent/10 rounded-lg border border-accent/20">
                       <p className="text-sm">{currentExercise.notes}</p>
                     </div>
                   )}
 
                   <Button 
                     onClick={() => completeExercise(currentExercise.id, currentExercise.exercise_id)}
-                    className="w-full"
+                    className="w-full btn-gradient"
                     disabled={completedRoutineExerciseIds.has(currentExercise.id)}
                   >
                     {completedRoutineExerciseIds.has(currentExercise.id) ? (

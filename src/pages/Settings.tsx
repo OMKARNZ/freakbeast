@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Trash2, HelpCircle, User, Moon, Sun, Mail, Phone } from 'lucide-react';
+import { Bell, Trash2, HelpCircle, User, Moon, Sun, Mail, Phone, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -9,12 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { EditProfileDialog } from '@/components/EditProfileDialog';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useSoundSettings } from '@/contexts/SoundSettingsContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const Settings = () => {
   const { signOut } = useAuth();
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const { timerSoundEnabled, toggleTimerSound, playTimerSound } = useSoundSettings();
   const [notifications, setNotifications] = useState({
     workoutReminders: false,
     goalNotifications: false,
@@ -23,6 +25,18 @@ const Settings = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showHelpCenter, setShowHelpCenter] = useState(false);
+
+  const handleTimerSoundToggle = () => {
+    toggleTimerSound();
+    if (!timerSoundEnabled) {
+      // Play a preview when enabling
+      setTimeout(() => playTimerSound(), 100);
+    }
+    toast({
+      title: "Settings Updated",
+      description: `Timer sound ${!timerSoundEnabled ? 'enabled' : 'disabled'}`,
+    });
+  };
 
   const handleDeleteAccount = async () => {
     try {
@@ -65,10 +79,10 @@ const Settings = () => {
       {/* Main Content */}
       <div className="flex-1 p-4 space-y-6">
         {/* Notifications */}
-        <Card>
+        <Card className="card-premium">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Bell className="w-5 h-5" />
+              <Bell className="w-5 h-5 text-primary" />
               <span>Notifications</span>
             </CardTitle>
           </CardHeader>
@@ -109,7 +123,7 @@ const Settings = () => {
         </Card>
 
         {/* Appearance */}
-        <Card>
+        <Card className="card-premium">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
@@ -130,42 +144,64 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* Account */}
-        <Card>
+        {/* Sound Settings */}
+        <Card className="card-premium">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <User className="w-5 h-5" />
+              {timerSoundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              <span>Sound</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Workout Timer Sound</Label>
+                <p className="text-xs text-muted-foreground">Play sound when starting workout timer</p>
+              </div>
+              <Switch 
+                checked={timerSoundEnabled}
+                onCheckedChange={handleTimerSoundToggle}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Account */}
+        <Card className="card-premium">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <User className="w-5 h-5 text-primary" />
               <span>Account</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Button 
               variant="outline" 
-              className="w-full justify-start" 
+              className="w-full justify-start hover:bg-primary/5" 
               onClick={() => setShowEditProfile(true)}
             >
               <User className="w-4 h-4 mr-3" />
               Edit Profile
             </Button>
             
-            <Button variant="outline" className="w-full justify-start" onClick={signOut}>
+            <Button variant="outline" className="w-full justify-start hover:bg-primary/5" onClick={signOut}>
               Sign Out
             </Button>
           </CardContent>
         </Card>
 
         {/* Support */}
-        <Card>
+        <Card className="card-premium">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <HelpCircle className="w-5 h-5" />
+              <HelpCircle className="w-5 h-5 text-primary" />
               <span>Support</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Button 
               variant="outline" 
-              className="w-full justify-start" 
+              className="w-full justify-start hover:bg-primary/5" 
               onClick={() => setShowHelpCenter(true)}
             >
               <HelpCircle className="w-4 h-4 mr-3" />

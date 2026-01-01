@@ -2,12 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* FreakBeast Design System - Vibrant Fitness Theme */
+/* FreakBeast Design System - Premium Professional Theme */
 
 @layer base {
   :root {
-    /* Light theme - Vibrant energetic aesthetic */
-    --background: 0 0% 99%;
+    /* Light theme - Elegant slate & gold aesthetic */
+    --background: 210 20% 98%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -16,8 +16,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Vibrant orange/coral primary */
-    --primary: 18 95% 55%;
+    /* Rich emerald/teal primary for premium feel */
+    --primary: 168 76% 42%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 96%;
@@ -26,17 +26,18 @@
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
 
-    --accent: 18 100% 95%;
-    --accent-foreground: 18 95% 40%;
+    /* Gold accent for premium touch */
+    --accent: 45 93% 47%;
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 18 95% 55%;
+    --ring: 168 76% 42%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
     /* Status colors */
     --success: 142 76% 36%;
@@ -49,14 +50,16 @@
     --info-foreground: 0 0% 100%;
 
     /* Premium gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(18 95% 55%), hsl(340 82% 52%));
+    --gradient-primary: linear-gradient(135deg, hsl(168 76% 42%), hsl(192 82% 46%));
+    --gradient-gold: linear-gradient(135deg, hsl(45 93% 47%), hsl(38 92% 50%));
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 14% 98%));
-    --gradient-hero: linear-gradient(180deg, hsl(18 100% 97%) 0%, hsl(0 0% 100%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(168 40% 97%) 0%, hsl(0 0% 100%) 100%);
     
     /* Elegant shadows */
-    --shadow-card: 0 4px 20px hsl(222 47% 11% / 0.06);
-    --shadow-button: 0 4px 14px hsl(18 95% 55% / 0.35);
-    --shadow-elevated: 0 8px 30px hsl(222 47% 11% / 0.1);
+    --shadow-card: 0 4px 24px hsl(222 47% 11% / 0.08);
+    --shadow-button: 0 4px 16px hsl(168 76% 42% / 0.35);
+    --shadow-elevated: 0 12px 40px hsl(222 47% 11% / 0.12);
+    --shadow-gold: 0 4px 16px hsl(45 93% 47% / 0.35);
     
     /* Smooth transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -64,37 +67,38 @@
   }
 
   .dark {
-    /* Dark theme - Bold vibrant dark mode */
-    --background: 222 47% 5%;
-    --foreground: 0 0% 98%;
+    /* Dark theme - Luxury dark mode with depth */
+    --background: 222 47% 6%;
+    --foreground: 210 20% 98%;
 
-    --card: 222 47% 8%;
-    --card-foreground: 0 0% 98%;
+    --card: 222 47% 9%;
+    --card-foreground: 210 20% 98%;
 
-    --popover: 222 47% 8%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 20% 98%;
 
-    /* Vibrant orange for dark mode */
-    --primary: 18 95% 55%;
-    --primary-foreground: 0 0% 100%;
+    /* Teal/cyan primary for dark elegance */
+    --primary: 168 70% 50%;
+    --primary-foreground: 222 47% 6%;
 
-    --secondary: 222 47% 12%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 222 47% 14%;
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 222 47% 12%;
+    --muted: 222 47% 14%;
     --muted-foreground: 220 9% 60%;
 
-    --accent: 18 95% 15%;
-    --accent-foreground: 18 95% 70%;
+    /* Gold accent */
+    --accent: 45 90% 55%;
+    --accent-foreground: 222 47% 6%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 222 47% 15%;
-    --input: 222 47% 12%;
-    --ring: 18 95% 55%;
+    --border: 222 47% 18%;
+    --input: 222 47% 14%;
+    --ring: 168 70% 50%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
     /* Status colors - dark mode */
     --success: 142 70% 45%;
@@ -107,28 +111,30 @@
     --info-foreground: 0 0% 100%;
 
     /* Dark mode gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(18 95% 55%), hsl(340 82% 52%));
-    --gradient-card: linear-gradient(145deg, hsl(222 47% 8%), hsl(222 47% 10%));
-    --gradient-hero: linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(222 47% 8%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(168 70% 50%), hsl(192 75% 50%));
+    --gradient-gold: linear-gradient(135deg, hsl(45 90% 55%), hsl(38 85% 55%));
+    --gradient-card: linear-gradient(145deg, hsl(222 47% 9%), hsl(222 47% 12%));
+    --gradient-hero: linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(222 47% 9%) 100%);
     
     /* Dark mode shadows */
-    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.4);
-    --shadow-button: 0 4px 14px hsl(18 95% 55% / 0.3);
-    --shadow-elevated: 0 8px 30px hsl(0 0% 0% / 0.5);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
+    --shadow-button: 0 4px 16px hsl(168 70% 50% / 0.3);
+    --shadow-elevated: 0 12px 40px hsl(0 0% 0% / 0.5);
+    --shadow-gold: 0 4px 16px hsl(45 90% 55% / 0.25);
     
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 
     /* Sidebar colors */
-    --sidebar-background: 222 47% 6%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 18 95% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 12%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 222 47% 15%;
-    --sidebar-ring: 18 95% 55%;
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 168 70% 50%;
+    --sidebar-primary-foreground: 222 47% 6%;
+    --sidebar-accent: 222 47% 14%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 222 47% 18%;
+    --sidebar-ring: 168 70% 50%;
   }
 }
 
@@ -164,7 +170,7 @@
 @layer components {
   /* Premium card styles */
   .card-premium {
-    @apply bg-card rounded-2xl border border-border/50;
+    @apply bg-card rounded-xl border border-border/50 backdrop-blur-sm;
     box-shadow: var(--shadow-card);
     transition: var(--transition-smooth);
   }
@@ -177,14 +183,27 @@
   /* Gradient button */
   .btn-gradient {
     background: var(--gradient-primary);
-    @apply text-primary-foreground font-semibold rounded-xl px-6 py-3;
+    @apply text-primary-foreground font-semibold rounded-lg px-6 py-3;
     box-shadow: var(--shadow-button);
     transition: var(--transition-bounce);
   }
 
   .btn-gradient:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 6px 20px hsl(18 95% 55% / 0.45);
+    filter: brightness(1.1);
+  }
+
+  /* Gold accent button */
+  .btn-gold {
+    background: var(--gradient-gold);
+    @apply text-foreground font-semibold rounded-lg px-6 py-3;
+    box-shadow: var(--shadow-gold);
+    transition: var(--transition-bounce);
+  }
+
+  .btn-gold:hover {
+    transform: translateY(-2px) scale(1.02);
+    filter: brightness(1.1);
   }
 
   /* Glass effect */
@@ -194,13 +213,13 @@
 
   /* Stat card */
   .stat-card {
-    @apply bg-card rounded-2xl p-4 border border-border/50;
+    @apply bg-card rounded-xl p-4 border border-border/50;
     box-shadow: var(--shadow-card);
   }
 
   /* Progress ring glow */
   .progress-glow {
-    filter: drop-shadow(0 0 8px hsl(18 95% 55% / 0.5));
+    filter: drop-shadow(0 0 8px hsl(168 76% 42% / 0.5));
   }
 
   /* Animated underline */
@@ -220,7 +239,31 @@
 
   /* Hero gradient background */
   .hero-gradient {
-    background: linear-gradient(135deg, hsl(18 95% 55% / 0.1), hsl(340 82% 52% / 0.05));
+    background: linear-gradient(135deg, hsl(168 76% 42% / 0.08), hsl(45 93% 47% / 0.05));
+  }
+
+  /* Premium exercise card */
+  .exercise-card {
+    @apply bg-card rounded-xl border border-border/50 overflow-hidden;
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-smooth);
+  }
+
+  .exercise-card:hover {
+    box-shadow: var(--shadow-elevated);
+    @apply border-primary/30;
+  }
+
+  /* Workout timer display */
+  .timer-display {
+    @apply font-mono text-4xl font-bold tracking-wider;
+    text-shadow: 0 0 20px hsl(168 76% 42% / 0.3);
+  }
+
+  /* Premium badge */
+  .badge-premium {
+    background: var(--gradient-gold);
+    @apply text-foreground text-xs font-semibold px-2 py-0.5 rounded-full;
   }
 }
 
@@ -229,6 +272,12 @@
   .text-gradient {
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-primary);
+  }
+
+  /* Gold text gradient */
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-gold);
   }
 
   /* Hover scale */
@@ -251,6 +300,20 @@
     }
     50% {
       opacity: 0.7;
+    }
+  }
+
+  /* Timer pulse for workout */
+  .timer-pulse {
+    animation: timer-pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes timer-pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
     }
   }
 
@@ -321,5 +384,14 @@
     100% {
       background-position: -200% 0;
     }
+  }
+
+  /* Glow effect */
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(168 76% 42% / 0.4);
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 20px hsl(45 93% 47% / 0.4);
   }
 }
