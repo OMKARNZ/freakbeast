@@ -75,7 +75,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       let error;
 
       if (existingProfile) {
-        // Update existing profile
+        // Update existing profile (bmi is a generated column, don't include it)
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
@@ -83,13 +83,12 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
             age: formData.age ? parseInt(formData.age) : null,
             height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
             weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
-            bmi: bmi ? parseFloat(bmi) : null,
             updated_at: new Date().toISOString()
           })
           .eq('user_id', user.id);
         error = updateError;
       } else {
-        // Insert new profile
+        // Insert new profile (bmi is a generated column, don't include it)
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -97,8 +96,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
             full_name: formData.full_name || null,
             age: formData.age ? parseInt(formData.age) : null,
             height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
-            weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
-            bmi: bmi ? parseFloat(bmi) : null
+            weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null
           });
         error = insertError;
       }
