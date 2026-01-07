@@ -209,6 +209,42 @@ const WorkoutSession = () => {
     }
   };
 
+  const calculateCaloriesBurned = () => {
+    // Calculate calories based on exercise types, sets, reps, and weight
+    let totalCalories = 0;
+    
+    exercises.forEach(exercise => {
+      if (completedRoutineExerciseIds.has(exercise.id)) {
+        const exerciseType = exercise.exercises?.exercise_type || 'other';
+        const sets = exercise.sets || 1;
+        const reps = exercise.reps || 10;
+        const weight = exercise.weight_kg || 0;
+        
+        // Base calories per rep based on exercise type
+        const caloriesPerRep: { [key: string]: number } = {
+          'weights': 0.5,      // Weight training burns ~0.5 cal/rep
+          'bodyweight': 0.4,   // Bodyweight ~0.4 cal/rep
+          'cardio': 0.8,       // Cardio is more intensive
+          'flexibility': 0.2, // Flexibility/stretching
+          'other': 0.4
+        };
+        
+        const baseCalories = (caloriesPerRep[exerciseType] || 0.4) * sets * reps;
+        
+        // Add weight multiplier (heavier weights burn more calories)
+        const weightMultiplier = weight > 0 ? 1 + (weight / 100) : 1;
+        
+        totalCalories += Math.round(baseCalories * weightMultiplier);
+      }
+    });
+    
+    // Add time-based calories (standing/rest burns ~2 cal/min)
+    const durationMinutes = elapsedTime / 60;
+    totalCalories += Math.round(durationMinutes * 2);
+    
+    return totalCalories;
+  };
+
   const finishWorkout = async () => {
     if (!workout || !startTime) return;
 
@@ -217,6 +253,7 @@ const WorkoutSession = () => {
       ? pausedTime + (endTime.getTime() - startTime.getTime())
       : endTime.getTime() - startTime.getTime();
     const duration = Math.round(totalTime / 60000); // minutes
+    const caloriesBurned = calculateCaloriesBurned();
 
     const { error } = await supabase
       .from('workouts')
@@ -224,6 +261,7 @@ const WorkoutSession = () => {
         status: 'completed',
         completed_at: endTime.toISOString(),
         total_duration_minutes: duration,
+        calories_burned: caloriesBurned,
         notes: notes
       })
       .eq('id', workout.id);
@@ -240,7 +278,7 @@ const WorkoutSession = () => {
 
     toast({
       title: "Workout Complete!",
-      description: `Great job! You completed your workout in ${duration} minutes.`,
+      description: `Great job! You burned ${caloriesBurned} calories in ${duration} minutes.`,
     });
 
     navigate('/workouts');
