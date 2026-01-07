@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Settings, BarChart3, Calculator } from 'lucide-react';
+import { User, Calculator } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BMIDialog } from '@/components/BMIDialog';
+import { ProfilePictureUpload } from '@/components/ProfilePictureUpload';
 import { supabase } from '@/integrations/supabase/client';
 
 const Profile = () => {
@@ -80,12 +80,10 @@ const Profile = () => {
         {/* User Info Header - Prominent Display */}
         <div className="bg-background border-b border-border py-8">
           <div className="flex flex-col items-center space-y-3 px-4">
-            <Avatar className="w-24 h-24 sm:w-28 sm:h-28 border-4 border-primary/10">
-              <AvatarImage src={profile?.avatar_url || user?.user_metadata?.avatar_url} />
-              <AvatarFallback className="bg-muted">
-                <User className="w-12 h-12" />
-              </AvatarFallback>
-            </Avatar>
+            <ProfilePictureUpload 
+              currentAvatarUrl={profile?.avatar_url || user?.user_metadata?.avatar_url}
+              onUploadComplete={() => fetchProfile()}
+            />
             
             <div className="text-center space-y-1">
               <h2 className="text-2xl sm:text-3xl font-bold">

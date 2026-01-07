@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 
 interface SoundSettingsContextType {
   timerSoundEnabled: boolean;
@@ -8,24 +8,8 @@ interface SoundSettingsContextType {
 
 const SoundSettingsContext = createContext<SoundSettingsContextType | undefined>(undefined);
 
-// Create audio context for generating sounds
-const createBeepSound = (frequency: number, duration: number, volume: number = 0.3) => {
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  
-  oscillator.frequency.value = frequency;
-  oscillator.type = 'sine';
-  
-  gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-  
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + duration);
-};
+// Custom workout timer sound URL - using a royalty-free workout beep sound
+const WORKOUT_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
 
 export function SoundSettingsProvider({ children }: { children: React.ReactNode }) {
   const [timerSoundEnabled, setTimerSoundEnabled] = useState(() => {
@@ -41,13 +25,29 @@ export function SoundSettingsProvider({ children }: { children: React.ReactNode 
     setTimerSoundEnabled(prev => !prev);
   };
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio element
+  useEffect(() => {
+    audioRef.current = new Audio(WORKOUT_SOUND_URL);
+    audioRef.current.volume = 0.5;
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
   const playTimerSound = useCallback(() => {
     if (!timerSoundEnabled) return;
     
-    // Play a pleasant workout start sound (3 ascending beeps)
-    setTimeout(() => createBeepSound(523.25, 0.15, 0.2), 0);      // C5
-    setTimeout(() => createBeepSound(659.25, 0.15, 0.25), 200);   // E5
-    setTimeout(() => createBeepSound(783.99, 0.3, 0.3), 400);     // G5 - longer final beep
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(err => {
+        console.log('Audio play failed:', err);
+      });
+    }
   }, [timerSoundEnabled]);
 
   return (

@@ -193,157 +193,172 @@ const Index = () => {
 
   // Logged In Dashboard View
   return (
-    <div className="min-h-screen bg-background p-4 space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold">Welcome back! 💪</h1>
-        <p className="text-muted-foreground">Here's your fitness overview</p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="card-premium">
-          <CardContent className="pt-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Dumbbell className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Workouts</p>
-                <p className="text-xl font-bold">{stats.workouts}</p>
-              </div>
+    <div className="min-h-screen bg-background animate-fade-in">
+      {/* Hero Dashboard Header */}
+      <div className="hero-gradient p-6 sm:p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Welcome back</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">Your Dashboard</h1>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="card-premium">
-          <CardContent className="pt-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center">
-                <Flame className="w-5 h-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Streak</p>
-                <p className="text-xl font-bold">{stats.streak} days</p>
-              </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={() => navigate('/profile')}>
+                <User className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="card-premium">
-          <CardContent className="pt-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
-                <Target className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Active Goals</p>
-                <p className="text-xl font-bold">{stats.goals}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="card-premium">
-          <CardContent className="pt-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-destructive/10 rounded-xl flex items-center justify-center">
-                <Activity className="w-5 h-5 text-destructive" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Calories</p>
-                <p className="text-xl font-bold">{stats.caloriesBurned}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Quick Actions</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <Button 
-            variant="outline" 
-            className="h-auto py-4 flex flex-col items-center space-y-2"
-            onClick={() => navigate('/workouts')}
-          >
-            <Dumbbell className="w-6 h-6 text-primary" />
-            <span>Start Workout</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="h-auto py-4 flex flex-col items-center space-y-2"
-            onClick={() => navigate('/goals')}
-          >
-            <Target className="w-6 h-6 text-success" />
-            <span>View Goals</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="h-auto py-4 flex flex-col items-center space-y-2"
-            onClick={() => navigate('/progress')}
-          >
-            <TrendingUp className="w-6 h-6 text-info" />
-            <span>Progress</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="h-auto py-4 flex flex-col items-center space-y-2"
-            onClick={() => navigate('/profile')}
-          >
-            <User className="w-6 h-6 text-muted-foreground" />
-            <span>Profile</span>
-          </Button>
+          </div>
         </div>
       </div>
 
-      {/* Recent Workouts */}
-      {recentWorkouts.length > 0 && (
+      <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <Card className="card-premium">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <Dumbbell className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Workouts</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.workouts}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-premium">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-warning/10 rounded-xl flex items-center justify-center">
+                  <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Streak</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.streak} <span className="text-sm font-normal">days</span></p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-premium">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-success/10 rounded-xl flex items-center justify-center">
+                  <Target className="w-5 h-5 sm:w-6 sm:h-6 text-success" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Active Goals</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.goals}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-premium">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-destructive/10 rounded-xl flex items-center justify-center">
+                  <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Calories</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.caloriesBurned}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Recent Workouts</h2>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/progress')}>
-              View All
+          <h2 className="text-lg font-semibold">Quick Actions</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <Button 
+              variant="outline" 
+              className="h-auto py-4 sm:py-6 flex flex-col items-center space-y-2 hover:bg-primary/5 hover:border-primary/50 transition-all"
+              onClick={() => navigate('/workouts')}
+            >
+              <Dumbbell className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+              <span className="text-sm sm:text-base">Start Workout</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-auto py-4 sm:py-6 flex flex-col items-center space-y-2 hover:bg-success/5 hover:border-success/50 transition-all"
+              onClick={() => navigate('/goals')}
+            >
+              <Target className="w-6 h-6 sm:w-8 sm:h-8 text-success" />
+              <span className="text-sm sm:text-base">View Goals</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-auto py-4 sm:py-6 flex flex-col items-center space-y-2 hover:bg-info/5 hover:border-info/50 transition-all"
+              onClick={() => navigate('/progress')}
+            >
+              <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-info" />
+              <span className="text-sm sm:text-base">Progress</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-auto py-4 sm:py-6 flex flex-col items-center space-y-2 hover:bg-muted transition-all"
+              onClick={() => navigate('/profile')}
+            >
+              <User className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
+              <span className="text-sm sm:text-base">Profile</span>
             </Button>
           </div>
-          <div className="space-y-3">
-            {recentWorkouts.map((workout) => (
-              <Card key={workout.id} className="card-premium">
-                <CardContent className="py-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                        <Dumbbell className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{workout.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(workout.completed_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {workout.total_duration_minutes && (
-                        <p className="text-xs text-muted-foreground flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {workout.total_duration_minutes}min
-                        </p>
-                      )}
-                      {workout.calories_burned && (
-                        <p className="text-xs text-warning flex items-center">
-                          <Flame className="w-3 h-3 mr-1" />
-                          {workout.calories_burned} cal
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </div>
-      )}
+
+        {/* Recent Workouts */}
+        {recentWorkouts.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Recent Workouts</h2>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/progress')}>
+                View All
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {recentWorkouts.map((workout) => (
+                <Card key={workout.id} className="card-premium">
+                  <CardContent className="py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                          <Dumbbell className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{workout.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(workout.completed_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {workout.total_duration_minutes && (
+                          <p className="text-xs text-muted-foreground flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {workout.total_duration_minutes}min
+                          </p>
+                        )}
+                        {workout.calories_burned && (
+                          <p className="text-xs text-warning flex items-center">
+                            <Flame className="w-3 h-3 mr-1" />
+                            {workout.calories_burned} cal
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
