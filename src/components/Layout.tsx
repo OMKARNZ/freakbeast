@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
-import BottomNavigation from './BottomNavigation';
+import AppSidebar from './AppSidebar';
+import MobileHeader from './MobileHeader';
 
 interface LayoutProps {
   children: ReactNode;
@@ -7,11 +8,14 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen bg-background">
-      <main className="pb-20"> {/* Add padding bottom for navigation */}
-        {children}
-      </main>
-      <BottomNavigation />
+    <div className="min-h-screen bg-background flex w-full">
+      <AppSidebar />
+      <div className="flex-1 flex flex-col min-w-0">
+        <MobileHeader />
+        <main className="flex-1">
+          {children}
+        </main>
+      </div>
     </div>
   );
 };
