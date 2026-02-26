@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Search, Plus } from 'lucide-react';
+import { Search, Plus, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 
 interface Exercise {
   id: string;
@@ -14,15 +15,17 @@ interface Exercise {
   muscle_group: string;
   exercise_type: string;
   equipment: string;
+  image_url: string | null;
+  instructions: string[] | null;
 }
 
 const ExerciseCatalog = () => {
-  const navigate = useNavigate();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [muscleFilter, setMuscleFilter] = useState('all');
   const [equipmentFilter, setEquipmentFilter] = useState('all');
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
   useEffect(() => {
     fetchExercises();
@@ -36,7 +39,9 @@ const ExerciseCatalog = () => {
         .order('name');
 
       if (error) throw error;
-      setExercises(data || []);
+      const exerciseList = data || [];
+      setExercises(exerciseList);
+      if (exerciseList.length > 0) setSelectedExercise(exerciseList[0]);
     } catch (error) {
       console.error('Error fetching exercises:', error);
     } finally {
@@ -49,129 +54,209 @@ const ExerciseCatalog = () => {
                          exercise.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesMuscle = muscleFilter === 'all' || exercise.muscle_group === muscleFilter;
     const matchesEquipment = equipmentFilter === 'all' || exercise.equipment?.toLowerCase().includes(equipmentFilter.toLowerCase());
-    
     return matchesSearch && matchesMuscle && matchesEquipment;
   });
 
   const muscleGroups = ['chest', 'back', 'shoulders', 'arms', 'core', 'legs', 'full_body', 'cardio'];
   const equipmentTypes = ['none', 'dumbbells', 'barbell', 'pull-up bar', 'band'];
 
+  const formatMuscle = (m: string) => m.charAt(0).toUpperCase() + m.slice(1).replace('_', ' ');
+
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header */}
-      <div className="flex items-center p-4 border-b border-border">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="mr-2">
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Exercise name or muscle"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+    <div className="flex flex-col lg:flex-row gap-6 h-full min-h-[calc(100vh-80px)]">
+      {/* Main Exercise Detail Panel */}
+      <div className="flex-1 min-w-0">
+        <h1 className="text-2xl font-bold mb-6">Exercise</h1>
 
-      {/* Add Custom Exercise Button */}
-      <div className="p-4 border-b border-border">
-        <Button variant="outline" className="w-full">
-          <Plus className="w-4 h-4 mr-2" />
-          Add custom
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="p-4 border-b border-border">
-        <h3 className="text-lg font-semibold mb-4">Full exercises catalog</h3>
-        
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="text-sm text-muted-foreground mb-2 block">Muscle</label>
-            <Select value={muscleFilter} onValueChange={setMuscleFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Any muscle" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Any muscle</SelectItem>
-                {muscleGroups.map(muscle => (
-                  <SelectItem key={muscle} value={muscle}>
-                    {muscle.charAt(0).toUpperCase() + muscle.slice(1).replace('_', ' ')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <label className="text-sm text-muted-foreground mb-2 block">Equipment</label>
-            <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Any equipment" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Any equipment</SelectItem>
-                {equipmentTypes.map(equipment => (
-                  <SelectItem key={equipment} value={equipment}>
-                    {equipment.charAt(0).toUpperCase() + equipment.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <label className="text-sm text-muted-foreground mb-2 block">Category</label>
-            <Select defaultValue="all">
-              <SelectTrigger>
-                <SelectValue placeholder="Any category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Any category</SelectItem>
-                <SelectItem value="strength">Strength</SelectItem>
-                <SelectItem value="cardio">Cardio</SelectItem>
-                <SelectItem value="flexibility">Flexibility</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {/* Exercise List */}
-      <div className="flex-1 p-4 space-y-4">
-        {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-pulse">Loading exercises...</div>
-          </div>
-        ) : filteredExercises.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">No exercises found matching your criteria</p>
-          </div>
-        ) : (
-          filteredExercises.map((exercise) => (
-            <Card key={exercise.id} className="cursor-pointer hover:bg-accent/50 transition-colors">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-4">
-                  {/* Exercise Icon/Image Placeholder */}
-                  <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                    <div className="w-8 h-8 bg-primary/20 rounded"></div>
+        {selectedExercise ? (
+          <>
+            {/* Exercise Info Card */}
+            <Card className="mb-6">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Text Info */}
+                  <div className="flex-1 space-y-4">
+                    <h2 className="text-2xl font-bold">{selectedExercise.name}</h2>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Equipment: <span className="font-semibold text-foreground">{selectedExercise.equipment || 'Body weight'}</span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Primary Muscle Group: <span className="font-semibold text-foreground">{formatMuscle(selectedExercise.muscle_group)}</span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Type: <span className="font-semibold text-foreground capitalize">{selectedExercise.exercise_type}</span>
+                      </p>
+                    </div>
+                    {selectedExercise.description && (
+                      <p className="text-sm text-muted-foreground mt-2">{selectedExercise.description}</p>
+                    )}
                   </div>
-                  
-                  <div className="flex-1 space-y-1">
-                    <h3 className="font-semibold text-lg">{exercise.name}</h3>
-                    <p className="text-sm text-primary capitalize">
-                      {exercise.muscle_group.replace('_', ' ')}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {exercise.equipment || 'Body weight'}
-                    </p>
+
+                  {/* Exercise Image */}
+                  <div className="w-full md:w-72 h-52 bg-muted rounded-lg flex items-center justify-center overflow-hidden shrink-0">
+                    {selectedExercise.image_url ? (
+                      <img
+                        src={selectedExercise.image_url}
+                        alt={selectedExercise.name}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Dumbbell className="w-12 h-12" />
+                        <span className="text-xs">No image</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))
+
+            {/* Tabs: Statistics / History / How to */}
+            <Tabs defaultValue="howto" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="statistics">Statistics</TabsTrigger>
+                <TabsTrigger value="history">History</TabsTrigger>
+                <TabsTrigger value="howto">How to</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="statistics">
+                <Card>
+                  <CardContent className="p-6">
+                    <p className="text-muted-foreground text-sm">Complete workouts with this exercise to see your statistics here.</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="history">
+                <Card>
+                  <CardContent className="p-6">
+                    <p className="text-muted-foreground text-sm">Your workout history for this exercise will appear here.</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="howto">
+                <Card>
+                  <CardContent className="p-6 space-y-3">
+                    {selectedExercise.instructions && selectedExercise.instructions.length > 0 ? (
+                      <ol className="list-decimal list-inside space-y-2">
+                        {selectedExercise.instructions.map((step, i) => (
+                          <li key={i} className="text-sm text-foreground">{step}</li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">
+                          No instructions available for this exercise yet.
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-medium text-foreground">Target:</span> {formatMuscle(selectedExercise.muscle_group)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-medium text-foreground">Equipment:</span> {selectedExercise.equipment || 'Body weight'}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </>
+        ) : (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Dumbbell className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">Select an exercise from the library</p>
+            </CardContent>
+          </Card>
         )}
+      </div>
+
+      {/* Right Sidebar - Exercise Library */}
+      <div className="w-full lg:w-80 xl:w-96 shrink-0">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold">Library</h2>
+          <Button variant="ghost" size="sm" className="text-primary gap-1">
+            <Plus className="w-4 h-4" />
+            Custom Exercise
+          </Button>
+        </div>
+
+        {/* Filters */}
+        <div className="space-y-3 mb-4">
+          <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Equipment" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Equipment</SelectItem>
+              {equipmentTypes.map(eq => (
+                <SelectItem key={eq} value={eq}>
+                  {eq.charAt(0).toUpperCase() + eq.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={muscleFilter} onValueChange={setMuscleFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Muscles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Muscles</SelectItem>
+              {muscleGroups.map(m => (
+                <SelectItem key={m} value={m}>{formatMuscle(m)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search Exercises"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {/* Exercise List */}
+        <div className="space-y-1 max-h-[calc(100vh-380px)] overflow-y-auto pr-1">
+          {loading ? (
+            <p className="text-center py-4 text-sm text-muted-foreground animate-pulse">Loading...</p>
+          ) : filteredExercises.length === 0 ? (
+            <p className="text-center py-4 text-sm text-muted-foreground">No exercises found</p>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground font-medium px-2 py-2">Popular Exercises</p>
+              {filteredExercises.map((exercise) => (
+                <button
+                  key={exercise.id}
+                  onClick={() => setSelectedExercise(exercise)}
+                  className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-colors ${
+                    selectedExercise?.id === exercise.id
+                      ? 'bg-accent/20 border border-primary/30'
+                      : 'hover:bg-muted'
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                    {exercise.image_url ? (
+                      <img src={exercise.image_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Dumbbell className="w-5 h-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{exercise.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{formatMuscle(exercise.muscle_group)}</p>
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
