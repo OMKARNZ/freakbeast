@@ -66,6 +66,7 @@ export type Database = {
           instructions: string[] | null
           muscle_group: Database["public"]["Enums"]["muscle_group"]
           name: string
+          user_id: string | null
           video_url: string | null
         }
         Insert: {
@@ -78,6 +79,7 @@ export type Database = {
           instructions?: string[] | null
           muscle_group: Database["public"]["Enums"]["muscle_group"]
           name: string
+          user_id?: string | null
           video_url?: string | null
         }
         Update: {
@@ -90,6 +92,7 @@ export type Database = {
           instructions?: string[] | null
           muscle_group?: Database["public"]["Enums"]["muscle_group"]
           name?: string
+          user_id?: string | null
           video_url?: string | null
         }
         Relationships: []

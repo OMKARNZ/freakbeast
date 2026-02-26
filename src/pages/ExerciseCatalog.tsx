@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
+import CreateCustomExerciseDialog from '@/components/CreateCustomExerciseDialog';
 
 interface Exercise {
   id: string;
@@ -26,6 +27,7 @@ const ExerciseCatalog = () => {
   const [equipmentFilter, setEquipmentFilter] = useState('all');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   useEffect(() => {
     fetchExercises();
@@ -71,7 +73,7 @@ const ExerciseCatalog = () => {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold">Library</h2>
-        <Button variant="ghost" size="sm" className="text-primary gap-1 text-xs">
+        <Button variant="ghost" size="sm" className="text-primary gap-1 text-xs" onClick={() => setShowCreateDialog(true)}>
           <Plus className="w-3.5 h-3.5" />
           Custom Exercise
         </Button>
@@ -284,6 +286,11 @@ const ExerciseCatalog = () => {
       <div className="hidden lg:flex flex-col w-80 xl:w-96 shrink-0 border-l border-border pl-6 h-[calc(100vh-120px)] sticky top-6">
         <LibraryContent />
       </div>
+      <CreateCustomExerciseDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onCreated={fetchExercises}
+      />
     </div>
   );
 };
