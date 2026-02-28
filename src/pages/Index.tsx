@@ -23,8 +23,8 @@ const Index = () => {
 
   useEffect(() => {
     if (user) {
-      fetchUserData();
-      fetchProfile();
+      // Fetch profile and workout data in parallel
+      Promise.all([fetchProfile(), fetchUserData()]).finally(() => setLoadingData(false));
     } else {
       setLoadingData(false);
     }
@@ -36,7 +36,7 @@ const Index = () => {
       .from('profiles')
       .select('full_name')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     if (data) setProfile(data);
   };
 
@@ -44,19 +44,23 @@ const Index = () => {
     if (!user) return;
 
     try {
-      const { data: workouts } = await supabase
-        .from('workouts')
-        .select('id, name, completed_at, total_duration_minutes, calories_burned')
-        .eq('user_id', user.id)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
-        .limit(5);
+      const [workoutsRes, goalsRes] = await Promise.all([
+        supabase
+          .from('workouts')
+          .select('id, name, completed_at, total_duration_minutes, calories_burned')
+          .eq('user_id', user.id)
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(5),
+        supabase
+          .from('fitness_goals')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+      ]);
 
-      const { data: goals } = await supabase
-        .from('fitness_goals')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('status', 'active');
+      const workouts = workoutsRes.data;
+      const goals = goalsRes.data;
 
       let streak = 0;
       if (workouts && workouts.length > 0) {
@@ -92,8 +96,6 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
-    } finally {
-      setLoadingData(false);
     }
   };
 
