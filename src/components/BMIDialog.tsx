@@ -96,7 +96,6 @@ export function BMIDialog({ open, onOpenChange }: BMIDialogProps) {
     const profileData = {
       height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
       weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
-      bmi: bmi,
       updated_at: new Date().toISOString()
     };
 
