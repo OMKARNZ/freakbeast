@@ -85,16 +85,33 @@ export function BMIDialog({ open, onOpenChange }: BMIDialogProps) {
 
     setLoading(true);
 
-    const { error } = await supabase
+    // Check if profile exists first
+    const { data: existing } = await supabase
       .from('profiles')
-      .upsert([
-        {
-          user_id: user.id,
-          height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
-          weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
-          bmi: bmi
-        }
-      ], { onConflict: 'user_id' });
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    let error;
+    const profileData = {
+      height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
+      weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
+      bmi: bmi,
+      updated_at: new Date().toISOString()
+    };
+
+    if (existing) {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update(profileData)
+        .eq('user_id', user.id);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({ ...profileData, user_id: user.id });
+      error = insertError;
+    }
 
     setLoading(false);
 
