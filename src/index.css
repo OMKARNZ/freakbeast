@@ -55,11 +55,19 @@
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 20% 98%));
     --gradient-hero: linear-gradient(180deg, hsl(207 50% 97%) 0%, hsl(0 0% 100%) 100%);
     
+    /* Liquid glass */
+    --glass-bg: hsl(0 0% 100% / 0.65);
+    --glass-border: hsl(0 0% 100% / 0.45);
+    --glass-highlight: hsl(0 0% 100% / 0.7);
+    --glass-blur: 16px;
+
     /* Elegant shadows */
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.06);
+    --shadow-card: 0 2px 16px hsl(0 0% 0% / 0.06), 0 0 1px hsl(0 0% 0% / 0.08);
     --shadow-button: 0 4px 16px hsl(207 100% 50% / 0.35);
-    --shadow-elevated: 0 12px 40px hsl(0 0% 0% / 0.1);
+    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.12), 0 0 1px hsl(0 0% 0% / 0.1);
+    --shadow-glass: 0 8px 32px hsl(0 0% 0% / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.6);
     --shadow-primary: 0 4px 16px hsl(207 100% 50% / 0.35);
+    --shadow-depth: 0 1px 3px hsl(0 0% 0% / 0.04), 0 6px 24px hsl(0 0% 0% / 0.06);
     
     /* Smooth transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -113,14 +121,22 @@
     /* Dark mode gradients */
     --gradient-primary: linear-gradient(135deg, hsl(207 100% 50%), hsl(207 100% 60%));
     --gradient-accent: linear-gradient(135deg, hsl(207 90% 55%), hsl(220 100% 60%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 6%), hsl(0 0% 10%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 8%), hsl(0 0% 12%));
     --gradient-hero: linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(0 0% 6%) 100%);
+
+    /* Liquid glass - dark */
+    --glass-bg: hsl(0 0% 8% / 0.6);
+    --glass-border: hsl(0 0% 100% / 0.08);
+    --glass-highlight: hsl(0 0% 100% / 0.05);
+    --glass-blur: 20px;
     
     /* Dark mode shadows */
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
+    --shadow-card: 0 2px 16px hsl(0 0% 0% / 0.4), 0 0 1px hsl(0 0% 100% / 0.05);
     --shadow-button: 0 4px 16px hsl(207 100% 50% / 0.3);
-    --shadow-elevated: 0 12px 40px hsl(0 0% 0% / 0.6);
+    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.5), 0 0 1px hsl(0 0% 100% / 0.06);
+    --shadow-glass: 0 8px 32px hsl(0 0% 0% / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.06);
     --shadow-primary: 0 4px 16px hsl(207 100% 50% / 0.3);
+    --shadow-depth: 0 1px 3px hsl(0 0% 0% / 0.3), 0 6px 24px hsl(0 0% 0% / 0.4);
     
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -168,22 +184,39 @@
 }
 
 @layer components {
-  /* Premium card styles */
+  /* Premium card styles - liquid glass */
   .card-premium {
-    @apply bg-card rounded-xl border border-border/50 backdrop-blur-sm;
-    box-shadow: var(--shadow-card);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    @apply rounded-2xl;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-glass);
     transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
   }
 
   .card-premium:hover {
     box-shadow: var(--shadow-elevated);
     transform: translateY(-2px);
+    border-color: hsl(207 100% 50% / 0.15);
   }
 
   /* Gradient button */
   .btn-gradient {
     background: var(--gradient-primary);
-    @apply text-primary-foreground font-semibold rounded-lg px-6 py-3;
+    @apply text-primary-foreground font-semibold rounded-xl px-6 py-3;
     box-shadow: var(--shadow-button);
     transition: var(--transition-bounce);
   }
@@ -196,7 +229,7 @@
   /* Accent button */
   .btn-accent {
     background: var(--gradient-accent);
-    @apply text-white font-semibold rounded-lg px-6 py-3;
+    @apply text-white font-semibold rounded-xl px-6 py-3;
     box-shadow: var(--shadow-primary);
     transition: var(--transition-bounce);
   }
@@ -206,15 +239,106 @@
     filter: brightness(1.1);
   }
 
-  /* Glass effect */
+  /* Liquid glass effect */
   .glass {
-    @apply bg-card/80 backdrop-blur-md border border-border/30;
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-glass);
+  }
+
+  /* Glass card - lighter variant */
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    @apply rounded-2xl;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-depth);
+    transition: var(--transition-smooth);
+    position: relative;
+  }
+
+  .glass-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+    pointer-events: none;
   }
 
   /* Stat card */
   .stat-card {
-    @apply bg-card rounded-xl p-4 border border-border/50;
-    box-shadow: var(--shadow-card);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    @apply rounded-2xl p-4;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-depth);
+    transition: var(--transition-smooth);
+  }
+
+  .stat-card:hover {
+    box-shadow: var(--shadow-glass);
+    transform: translateY(-1px);
+  }
+
+  /* Progress ring glow */
+  .progress-glow {
+    filter: drop-shadow(0 0 8px hsl(207 100% 50% / 0.5));
+  }
+
+  /* Animated underline */
+  .link-underline {
+    @apply relative;
+  }
+
+  .link-underline::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-primary rounded-full;
+    transition: width 0.3s ease;
+  }
+
+  .link-underline:hover::after {
+    @apply w-full;
+  }
+
+  /* Hero gradient background */
+  .hero-gradient {
+    background: linear-gradient(135deg, hsl(207 100% 50% / 0.08), hsl(220 100% 60% / 0.05));
+  }
+
+  /* Premium exercise card */
+  .exercise-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    @apply rounded-2xl overflow-hidden;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-depth);
+    transition: var(--transition-smooth);
+  }
+
+  .exercise-card:hover {
+    box-shadow: var(--shadow-glass);
+    border-color: hsl(207 100% 50% / 0.2);
+    transform: translateY(-1px);
+  }
+
+  /* Workout timer display */
+  .timer-display {
+    @apply font-mono text-4xl font-bold tracking-wider;
+    text-shadow: 0 0 20px hsl(207 100% 50% / 0.3);
+  }
+
+  /* Premium badge */
+  .badge-premium {
+    background: var(--gradient-primary);
+    @apply text-white text-xs font-semibold px-2 py-0.5 rounded-full;
   }
 
   /* Progress ring glow */
