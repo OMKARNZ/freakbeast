@@ -85,6 +85,8 @@ export default {
         'card': 'var(--shadow-card)',
         'button': 'var(--shadow-button)',
         'elevated': 'var(--shadow-elevated)',
+        'glass': 'var(--shadow-glass)',
+        'depth': 'var(--shadow-depth)',
       },
       keyframes: {
         "accordion-down": {
