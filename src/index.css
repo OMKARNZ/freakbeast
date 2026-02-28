@@ -55,11 +55,19 @@
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 20% 98%));
     --gradient-hero: linear-gradient(180deg, hsl(207 50% 97%) 0%, hsl(0 0% 100%) 100%);
     
+    /* Liquid glass */
+    --glass-bg: hsl(0 0% 100% / 0.65);
+    --glass-border: hsl(0 0% 100% / 0.45);
+    --glass-highlight: hsl(0 0% 100% / 0.7);
+    --glass-blur: 16px;
+
     /* Elegant shadows */
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.06);
+    --shadow-card: 0 2px 16px hsl(0 0% 0% / 0.06), 0 0 1px hsl(0 0% 0% / 0.08);
     --shadow-button: 0 4px 16px hsl(207 100% 50% / 0.35);
-    --shadow-elevated: 0 12px 40px hsl(0 0% 0% / 0.1);
+    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.12), 0 0 1px hsl(0 0% 0% / 0.1);
+    --shadow-glass: 0 8px 32px hsl(0 0% 0% / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.6);
     --shadow-primary: 0 4px 16px hsl(207 100% 50% / 0.35);
+    --shadow-depth: 0 1px 3px hsl(0 0% 0% / 0.04), 0 6px 24px hsl(0 0% 0% / 0.06);
     
     /* Smooth transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
