@@ -121,14 +121,22 @@
     /* Dark mode gradients */
     --gradient-primary: linear-gradient(135deg, hsl(207 100% 50%), hsl(207 100% 60%));
     --gradient-accent: linear-gradient(135deg, hsl(207 90% 55%), hsl(220 100% 60%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 6%), hsl(0 0% 10%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 8%), hsl(0 0% 12%));
     --gradient-hero: linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(0 0% 6%) 100%);
+
+    /* Liquid glass - dark */
+    --glass-bg: hsl(0 0% 8% / 0.6);
+    --glass-border: hsl(0 0% 100% / 0.08);
+    --glass-highlight: hsl(0 0% 100% / 0.05);
+    --glass-blur: 20px;
     
     /* Dark mode shadows */
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
+    --shadow-card: 0 2px 16px hsl(0 0% 0% / 0.4), 0 0 1px hsl(0 0% 100% / 0.05);
     --shadow-button: 0 4px 16px hsl(207 100% 50% / 0.3);
-    --shadow-elevated: 0 12px 40px hsl(0 0% 0% / 0.6);
+    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.5), 0 0 1px hsl(0 0% 100% / 0.06);
+    --shadow-glass: 0 8px 32px hsl(0 0% 0% / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.06);
     --shadow-primary: 0 4px 16px hsl(207 100% 50% / 0.3);
+    --shadow-depth: 0 1px 3px hsl(0 0% 0% / 0.3), 0 6px 24px hsl(0 0% 0% / 0.4);
     
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
