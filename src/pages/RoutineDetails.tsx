@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { PredefinedPlansDialog } from '@/components/PredefinedPlansDialog';
+import { PredefinedPlansDialog } from '@/components/dialogs/PredefinedPlansDialog';
 
 const RoutineDetails = () => {
   const { id } = useParams();

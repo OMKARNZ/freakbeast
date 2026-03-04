@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { User, Calculator } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { BMIDialog } from '@/components/BMIDialog';
-import { ProfilePictureUpload } from '@/components/ProfilePictureUpload';
+import { BMIDialog } from '@/components/dialogs/BMIDialog';
+import { ProfilePictureUpload } from '@/components/profile/ProfilePictureUpload';
 import { supabase } from '@/integrations/supabase/client';
 
 const Profile = () => {

@@ -18,16 +18,40 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCallback } from 'react';
+
+interface Routine {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface RoutineExercise {
+  daily_routine_id: string;
+  exercise_id: string;
+  order_index: number;
+  sets: number;
+  reps: number | null;
+  weight_kg: number | null;
+  duration_seconds: number | null;
+  distance_meters: number | null;
+  rest_seconds: number | null;
+  notes: string | null;
+}
 
 const Workouts = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  
-  const [routines, setRoutines] = useState([]);
+
+  const [routines, setRoutines] = useState<Routine[]>([]);
   const [showNewRoutineDialog, setShowNewRoutineDialog] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
-  const [selectedRoutine, setSelectedRoutine] = useState<any>(null);
+  const [selectedRoutine, setSelectedRoutine] = useState<Routine | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: ''
@@ -37,7 +61,7 @@ const Workouts = () => {
     description: ''
   });
 
-  const fetchRoutines = async () => {
+  const fetchRoutines = useCallback(async () => {
     if (!user) return;
 
     const { data, error } = await supabase
@@ -52,11 +76,11 @@ const Workouts = () => {
     }
 
     setRoutines(data || []);
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchRoutines();
-  }, [user]);
+  }, [fetchRoutines]);
 
   const handleCreateRoutine = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +112,7 @@ const Workouts = () => {
     setFormData({ name: '', description: '' });
     setShowNewRoutineDialog(false);
     fetchRoutines();
-    
+
     // Navigate to routine details
     navigate(`/routines/${data.id}`);
   };
@@ -97,7 +121,7 @@ const Workouts = () => {
     navigate('/exercises');
   };
 
-  const handleRename = (routine: any) => {
+  const handleRename = (routine: Routine) => {
     setSelectedRoutine(routine);
     setRenameData({
       name: routine.name,
@@ -139,7 +163,7 @@ const Workouts = () => {
     fetchRoutines();
   };
 
-  const handleDuplicate = async (routine: any) => {
+  const handleDuplicate = async (routine: Routine) => {
     if (!user) return;
 
     const { data, error } = await supabase
@@ -161,7 +185,6 @@ const Workouts = () => {
       return;
     }
 
-    // Also duplicate daily routines and exercises
     const { data: dailyRoutines } = await supabase
       .from('daily_routines')
       .select('*, routine_exercises(*)')
@@ -182,7 +205,7 @@ const Workouts = () => {
           .single();
 
         if (!dailyError && newDailyRoutine && dailyRoutine.routine_exercises) {
-          const exercisesToInsert = dailyRoutine.routine_exercises.map((exercise: any) => ({
+          const exercisesToInsert = dailyRoutine.routine_exercises.map((exercise: RoutineExercise) => ({
             daily_routine_id: newDailyRoutine.id,
             exercise_id: exercise.exercise_id,
             order_index: exercise.order_index,
@@ -210,7 +233,7 @@ const Workouts = () => {
     fetchRoutines();
   };
 
-  const handleShare = async (routine: any) => {
+  const handleShare = async (routine: Routine) => {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -219,11 +242,9 @@ const Workouts = () => {
           url: window.location.href
         });
       } catch (error) {
-        // User cancelled sharing or sharing failed
         console.log('Sharing cancelled or failed');
       }
     } else {
-      // Fallback: copy to clipboard
       const shareText = `${routine.name}\n${routine.description || ''}\n\nShared from FitTracker`;
       try {
         await navigator.clipboard.writeText(shareText);
@@ -242,7 +263,7 @@ const Workouts = () => {
 
   const handleDeleteAll = async () => {
     if (!user) return;
-    
+
     const { error } = await supabase
       .from('workout_routines')
       .delete()
@@ -261,7 +282,7 @@ const Workouts = () => {
       title: "Success",
       description: "All routines deleted successfully!",
     });
-    
+
     fetchRoutines();
   };
 
@@ -299,7 +320,7 @@ const Workouts = () => {
       title: "Success",
       description: "Routine deleted successfully!",
     });
-    
+
     fetchRoutines();
   };
 
@@ -354,10 +375,8 @@ const Workouts = () => {
       {/* Main Content */}
       <div className="flex-1 p-4">
         {routines.length === 0 ? (
-          /* Empty State */
           <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
             <div className="relative mx-auto w-48 h-32">
-              {/* Clipboard illustration */}
               <div className="absolute inset-0 bg-gradient-card rounded-lg shadow-card transform rotate-2">
                 <div className="p-4 space-y-2">
                   <div className="flex items-center space-x-2">
@@ -374,8 +393,6 @@ const Workouts = () => {
                   </div>
                 </div>
               </div>
-              
-              {/* Timer illustration */}
               <div className="absolute -top-2 -right-2 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-button">
                 <div className="w-6 h-6 border-2 border-primary-foreground rounded-full relative">
                   <div className="absolute top-1 left-1/2 w-0.5 h-2 bg-primary-foreground transform -translate-x-1/2 origin-bottom rotate-45"></div>
@@ -407,7 +424,7 @@ const Workouts = () => {
                     <Input
                       id="routine-name"
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Enter routine name"
                       required
                     />
@@ -417,14 +434,14 @@ const Workouts = () => {
                     <Textarea
                       id="routine-description"
                       value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Describe your routine..."
                     />
                   </div>
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       className="flex-1"
                       onClick={() => setShowNewRoutineDialog(false)}
                     >
@@ -439,9 +456,8 @@ const Workouts = () => {
             </Dialog>
           </div>
         ) : (
-          /* Routines List */
           <div className="space-y-4">
-            {routines.map((routine: any) => (
+            {routines.map((routine: Routine) => (
               <Card key={routine.id} className="cursor-pointer hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
@@ -458,8 +474,8 @@ const Workouts = () => {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -505,7 +521,7 @@ const Workouts = () => {
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
+                                <AlertDialogAction
                                   onClick={() => handleDeleteRoutine(routine.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
@@ -526,8 +542,6 @@ const Workouts = () => {
                 )}
               </Card>
             ))}
-            
-            {/* Add New Routine Card */}
             <Dialog open={showNewRoutineDialog} onOpenChange={setShowNewRoutineDialog}>
               <DialogTrigger asChild>
                 <Card className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer">
@@ -549,7 +563,7 @@ const Workouts = () => {
                     <Input
                       id="routine-name-2"
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Enter routine name"
                       required
                     />
@@ -559,14 +573,14 @@ const Workouts = () => {
                     <Textarea
                       id="routine-description-2"
                       value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Describe your routine..."
                     />
                   </div>
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       className="flex-1"
                       onClick={() => setShowNewRoutineDialog(false)}
                     >
@@ -581,8 +595,6 @@ const Workouts = () => {
             </Dialog>
           </div>
         )}
-
-        {/* Rename Dialog */}
         <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
           <DialogContent className="sm:max-w-md mx-4">
             <DialogHeader>
@@ -594,7 +606,7 @@ const Workouts = () => {
                 <Input
                   id="rename-name"
                   value={renameData.name}
-                  onChange={(e) => setRenameData({...renameData, name: e.target.value})}
+                  onChange={(e) => setRenameData({ ...renameData, name: e.target.value })}
                   placeholder="Enter routine name"
                   required
                 />
@@ -604,14 +616,14 @@ const Workouts = () => {
                 <Textarea
                   id="rename-description"
                   value={renameData.description}
-                  onChange={(e) => setRenameData({...renameData, description: e.target.value})}
+                  onChange={(e) => setRenameData({ ...renameData, description: e.target.value })}
                   placeholder="Describe your routine..."
                 />
               </div>
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="flex-1"
                   onClick={() => setShowRenameDialog(false)}
                 >
@@ -625,7 +637,7 @@ const Workouts = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </div >
   );
 };
 

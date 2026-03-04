@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Target, TrendingUp, Calendar, Trophy, Play, Trash2, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,14 +13,29 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+interface Goal {
+  id: string;
+  title: string;
+  description: string | null;
+  goal_type: string;
+  target_value: number;
+  current_value: number;
+  unit: string;
+  target_date: string | null;
+  status: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 const Goals = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [goals, setGoals] = useState([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [showNewGoalDialog, setShowNewGoalDialog] = useState(false);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<any>(null);
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [progressValue, setProgressValue] = useState('');
   const [renameTitle, setRenameTitle] = useState('');
   const [formData, setFormData] = useState({
@@ -32,9 +47,9 @@ const Goals = () => {
     target_date: ''
   });
 
-  const fetchGoals = async () => {
+  const fetchGoals = useCallback(async () => {
     if (!user) return;
-    
+
     const { data, error } = await supabase
       .from('fitness_goals')
       .select('*')
@@ -47,11 +62,11 @@ const Goals = () => {
     }
 
     setGoals(data || []);
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchGoals();
-  }, [user]);
+  }, [fetchGoals]);
 
   const handleCreateGoal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +79,7 @@ const Goals = () => {
         user_id: user.id,
         target_value: parseFloat(formData.target_value),
         current_value: 0,
-        goal_type: formData.goal_type as any
+        goal_type: formData.goal_type
       }])
       .select()
       .single();
@@ -116,12 +131,12 @@ const Goals = () => {
       title: "Goal Started!",
       description: "Your goal is now active. Good luck!",
     });
-    
+
     fetchGoals();
   };
 
   const handleUpdateProgress = (goalId: string) => {
-    const goal = goals.find((g: any) => g.id === goalId);
+    const goal = goals.find((g: Goal) => g.id === goalId);
     setSelectedGoal(goal);
     setProgressValue(goal?.current_value?.toString() || '0');
     setShowUpdateDialog(true);
@@ -132,7 +147,7 @@ const Goals = () => {
 
     const { error } = await supabase
       .from('fitness_goals')
-      .update({ 
+      .update({
         current_value: parseFloat(progressValue),
         status: parseFloat(progressValue) >= selectedGoal.target_value ? 'completed' : 'active'
       })
@@ -152,7 +167,7 @@ const Goals = () => {
       title: "Progress Updated!",
       description: "Your goal progress has been updated successfully.",
     });
-    
+
     setShowUpdateDialog(false);
     setSelectedGoal(null);
     setProgressValue('');
@@ -160,11 +175,11 @@ const Goals = () => {
   };
 
   const handleCompleteGoal = async (goalId: string) => {
-    const goal = goals.find((g: any) => g.id === goalId);
-    
+    const goal = goals.find((g: Goal) => g.id === goalId);
+
     const { error } = await supabase
       .from('fitness_goals')
-      .update({ 
+      .update({
         status: 'completed',
         current_value: goal?.target_value || 0
       })
@@ -184,7 +199,7 @@ const Goals = () => {
       title: "Congratulations! 🎉",
       description: "You've completed your goal! Great achievement!",
     });
-    
+
     fetchGoals();
   };
 
@@ -208,11 +223,11 @@ const Goals = () => {
       title: "Goal Deleted",
       description: "Goal has been deleted successfully.",
     });
-    
+
     fetchGoals();
   };
 
-  const handleRenameGoal = (goal: any) => {
+  const handleRenameGoal = (goal: Goal) => {
     setSelectedGoal(goal);
     setRenameTitle(goal.title);
     setShowRenameDialog(true);
@@ -220,7 +235,7 @@ const Goals = () => {
 
   const handleRenameSubmit = async () => {
     if (!selectedGoal) return;
-    
+
     if (!renameTitle.trim()) {
       toast({
         title: "Validation Error",
@@ -249,7 +264,7 @@ const Goals = () => {
       title: "Success",
       description: "Goal renamed successfully!",
     });
-    
+
     setShowRenameDialog(false);
     setSelectedGoal(null);
     setRenameTitle('');
@@ -281,15 +296,15 @@ const Goals = () => {
                 <Input
                   id="goal-title"
                   value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g., Lose 10kg weight"
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="goal-type">Goal Type</Label>
-                <Select value={formData.goal_type} onValueChange={(value) => setFormData({...formData, goal_type: value})}>
+                <Select value={formData.goal_type} onValueChange={(value) => setFormData({ ...formData, goal_type: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select goal type" />
                   </SelectTrigger>
@@ -311,18 +326,18 @@ const Goals = () => {
                     id="target-value"
                     type="number"
                     value={formData.target_value}
-                    onChange={(e) => setFormData({...formData, target_value: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, target_value: e.target.value })}
                     placeholder="10"
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="unit">Unit</Label>
                   <Input
                     id="unit"
                     value={formData.unit}
-                    onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                     placeholder="kg, lbs, km, etc."
                     required
                   />
@@ -335,7 +350,7 @@ const Goals = () => {
                   id="target-date"
                   type="date"
                   value={formData.target_date}
-                  onChange={(e) => setFormData({...formData, target_date: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, target_date: e.target.value })}
                 />
               </div>
 
@@ -344,15 +359,15 @@ const Goals = () => {
                 <Textarea
                   id="goal-description"
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Describe your goal and motivation..."
                 />
               </div>
 
               <div className="flex space-x-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="flex-1"
                   onClick={() => setShowNewGoalDialog(false)}
                 >
@@ -370,15 +385,12 @@ const Goals = () => {
       {/* Main Content */}
       <div className="flex-1 p-4">
         {goals.length === 0 ? (
-          /* Empty State */
           <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
             <div className="relative mx-auto w-48 h-32">
-              {/* Target illustration */}
               <div className="absolute inset-0 bg-gradient-card rounded-full shadow-card flex items-center justify-center">
                 <Target className="w-16 h-16 text-primary" />
               </div>
-              
-              {/* Trophy illustration */}
+
               <div className="absolute -top-2 -right-2 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-button">
                 <Trophy className="w-6 h-6 text-primary-foreground" />
               </div>
@@ -411,15 +423,15 @@ const Goals = () => {
                     <Input
                       id="title"
                       value={formData.title}
-                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                       placeholder="e.g., Lose 10 kg"
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="goal_type">Goal Type</Label>
-                    <Select value={formData.goal_type} onValueChange={(value) => setFormData({...formData, goal_type: value})}>
+                    <Select value={formData.goal_type} onValueChange={(value) => setFormData({ ...formData, goal_type: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select goal type" />
                       </SelectTrigger>
@@ -441,7 +453,7 @@ const Goals = () => {
                         id="target_value"
                         type="number"
                         value={formData.target_value}
-                        onChange={(e) => setFormData({...formData, target_value: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, target_value: e.target.value })}
                         placeholder="10"
                       />
                     </div>
@@ -450,7 +462,7 @@ const Goals = () => {
                       <Input
                         id="unit"
                         value={formData.unit}
-                        onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                         placeholder="kg, lbs, reps"
                       />
                     </div>
@@ -462,7 +474,7 @@ const Goals = () => {
                       id="target_date"
                       type="date"
                       value={formData.target_date}
-                      onChange={(e) => setFormData({...formData, target_date: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, target_date: e.target.value })}
                     />
                   </div>
 
@@ -471,15 +483,15 @@ const Goals = () => {
                     <Textarea
                       id="description"
                       value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Describe your goal..."
                     />
                   </div>
 
                   <div className="flex space-x-2 pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       className="flex-1"
                       onClick={() => setShowNewGoalDialog(false)}
                     >
@@ -494,9 +506,8 @@ const Goals = () => {
             </Dialog>
           </div>
         ) : (
-          /* Goals List */
           <div className="space-y-4">
-            {goals.map((goal: any) => (
+            {goals.map((goal: Goal) => (
               <Card key={goal.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -504,8 +515,8 @@ const Goals = () => {
                       <CardTitle className="text-lg">{goal.title}</CardTitle>
                       <div className="flex items-center space-x-2">
                         <Badge variant={
-                          goal.status === 'completed' ? 'default' : 
-                          goal.status === 'active' ? 'secondary' : 'outline'
+                          goal.status === 'completed' ? 'default' :
+                            goal.status === 'active' ? 'secondary' : 'outline'
                         }>
                           {goal.status}
                         </Badge>
@@ -534,7 +545,7 @@ const Goals = () => {
                     )}
                     <div className="flex items-center space-x-2">
                       <div className="flex-1 bg-muted rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-primary h-2 rounded-full transition-all"
                           style={{ width: `${Math.min((goal.current_value / goal.target_value) * 100, 100)}%` }}
                         />
@@ -542,8 +553,8 @@ const Goals = () => {
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {goal.status === 'planned' && (
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           className="w-full sm:w-auto"
                           onClick={() => handleStartGoal(goal.id)}
@@ -553,8 +564,8 @@ const Goals = () => {
                         </Button>
                       )}
 
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         className="w-full sm:w-auto"
                         onClick={() => handleRenameGoal(goal)}
@@ -563,10 +574,10 @@ const Goals = () => {
                         <span className="hidden sm:inline">Rename</span>
                         <span className="sm:hidden">Rename</span>
                       </Button>
-                    
+
                       {goal.status === 'active' && (
-                        <Button 
-                          variant="default" 
+                        <Button
+                          variant="default"
                           size="sm"
                           className="w-full sm:w-auto"
                           onClick={() => handleCompleteGoal(goal.id)}
@@ -577,8 +588,8 @@ const Goals = () => {
                       )}
 
                       {goal.status === 'active' && (
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           className="w-full sm:w-auto"
                           onClick={() => handleUpdateProgress(goal.id)}
@@ -604,7 +615,7 @@ const Goals = () => {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
+                            <AlertDialogAction
                               onClick={() => handleDeleteGoal(goal.id)}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
@@ -621,7 +632,6 @@ const Goals = () => {
           </div>
         )}
 
-        {/* Rename Goal Dialog */}
         <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -651,9 +661,9 @@ const Goals = () => {
                 </p>
               </div>
               <div className="flex space-x-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="flex-1"
                   onClick={() => {
                     setShowRenameDialog(false);
@@ -663,8 +673,8 @@ const Goals = () => {
                 >
                   Cancel
                 </Button>
-                <Button 
-                  onClick={handleRenameSubmit} 
+                <Button
+                  onClick={handleRenameSubmit}
                   className="flex-1"
                   disabled={!renameTitle.trim()}
                 >
@@ -675,7 +685,6 @@ const Goals = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Update Progress Dialog */}
         <Dialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -702,9 +711,9 @@ const Goals = () => {
                 </p>
               </div>
               <div className="flex space-x-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="flex-1"
                   onClick={() => setShowUpdateDialog(false)}
                 >

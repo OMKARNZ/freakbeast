@@ -1,0 +1,86 @@
+﻿
+> vite_react_shadcn_ts@0.0.0 build
+> vite build
+
+[36mvite v5.4.19 [32mbuilding for production...[36m[39m
+transforming...
+node.exe : Browserslist: 
+browsers data (caniuse-lite) 
+is 9 months old. Please run:
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (Browser  
+  slist: b...ld. Please ru   
+ n::String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+  npx 
+update-browserslist-db@latest
+  Why you should do it 
+regularly: https://github.com
+/browserslist/update-db#readm
+e
+
+[1m[33mwarn[39m[22m - 
+The class `ease-[cubic-bezier
+(0.4,0,0.2,1)]` is ambiguous 
+and matches multiple 
+utilities.
+[1m[33mwarn[39m[22m - If 
+this is content and not a 
+class, replace it with `ease-
+&lsqb;cubic-bezier(0.4,0,0.2,
+1)&rsqb;` to silence this 
+warning.
+[32mΓ£ô[39m 43 modules transformed.
+[31mx[39m Build failed in 
+4.18s
+[31merror during build:
+[31m[vite:load-fallback] 
+Could not load C:\Users\nagve
+\OneDrive\Desktop\FreakBeast0
+9\freakbeast\src/components/l
+ayout/Layout (imported by 
+src/App.tsx): ENOENT: no 
+such file or directory, open 
+'C:\Users\nagve\OneDrive\Desk
+top\FreakBeast09\freakbeast\s
+rc\components\layout\Layout'
+[31m
+    at async open (node:inter
+nal/fs/promises:636:25)
+    at async Object.readFile 
+(node:internal/fs/promises:12
+69:14)
+    at async Object.load (fil
+e:///C:/Users/nagve/OneDrive/
+Desktop/FreakBeast09/freakbea
+st/node_modules/vite/dist/nod
+e/chunks/dep-C6uTJdX2.js:6534
+1:25)
+    at async PluginDriver.hoo
+kFirstAndGetPlugin (file:///C
+:/Users/nagve/OneDrive/Deskto
+p/FreakBeast09/freakbeast/nod
+e_modules/rollup/dist/es/shar
+ed/node-entry.js:20630:28)
+    at async file:///C:/Users
+/nagve/OneDrive/Desktop/Freak
+Beast09/freakbeast/node_modul
+es/rollup/dist/es/shared/node
+-entry.js:19750:33
+    at async Queue.work (file
+:///C:/Users/nagve/OneDrive/D
+esktop/FreakBeast09/freakbeas
+t/node_modules/rollup/dist/es
+/shared/node-entry.js:20840:3
+2)[39m

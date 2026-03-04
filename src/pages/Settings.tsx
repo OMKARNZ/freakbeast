@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { EditProfileDialog } from '@/components/EditProfileDialog';
+import { EditProfileDialog } from '@/components/dialogs/EditProfileDialog';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSoundSettings } from '@/contexts/SoundSettingsContext';
 import { supabase } from '@/integrations/supabase/client';

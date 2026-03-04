@@ -1,0 +1,128 @@
+﻿
+> vite_react_shadcn_ts@0.0.0 lint
+> eslint .
+
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\AppSidebar.tsx
+  28:6  warning  React Hook useEffect has a missing dependency: 'fetchProfile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\BMIDialog.tsx
+  31:6  warning  React Hook useEffect has a missing dependency: 'fetchProfile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  35:6  warning  React Hook useEffect has a missing dependency: 'calculateBMI'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\CreateCustomExerciseDialog.tsx
+  107:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\EditProfileDialog.tsx
+  30:6  warning  React Hook useEffect has a missing dependency: 'fetchProfile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\PredefinedPlansDialog.tsx
+   12:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   13:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  201:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\ProfileSidebar.tsx
+  26:6  warning  React Hook useEffect has a missing dependency: 'fetchProfile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\ui\badge.tsx
+  29:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\ui\button.tsx
+  47:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\ui\command.tsx
+  24:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\ui\form.tsx
+  129:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\ui\navigation-menu.tsx
+  111:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\ui\sidebar.tsx
+  636:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\ui\sonner.tsx
+  27:19  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\ui\textarea.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\components\ui\toggle.tsx
+  37:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\contexts\AuthContext.tsx
+   10:84  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   11:65  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  101:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\contexts\SoundSettingsContext.tsx
+  60:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\contexts\ThemeContext.tsx
+  36:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\pages\Goals.tsx
+   23:52  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+   54:6   warning  React Hook useEffect has a missing dependency: 'fetchGoals'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   67:42  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  124:33  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  163:33  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  215:35  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  499:31  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\pages\Index.tsx
+  20:56  error    Unexpected any. Specify a different type                                                                                               @typescript-eslint/no-explicit-any
+  31:6   warning  React Hook useEffect has missing dependencies: 'fetchProfile' and 'fetchUserData'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\pages\Profile.tsx
+  15:42  error    Unexpected any. Specify a different type                                                                                            @typescript-eslint/no-explicit-any
+  23:6   warning  React Hook useEffect has missing dependencies: 'fetchProfile' and 'fetchStats'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  31:6   warning  React Hook useEffect has a missing dependency: 'fetchProfile'. Either include it or remove the dependency array                     react-hooks/exhaustive-deps
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\pages\Progress.tsx
+   24:48  error    Unexpected any. Specify a different type                                                                                                         @typescript-eslint/no-explicit-any
+   25:52  error    Unexpected any. Specify a different type                                                                                                         @typescript-eslint/no-explicit-any
+   26:48  error    Unexpected any. Specify a different type                                                                                                         @typescript-eslint/no-explicit-any
+   42:6   warning  React Hook useEffect has missing dependencies: 'fetchProgressData' and 'fetchWeightHistory'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  197:22  error    Unexpected any. Specify a different type                                                                                                         @typescript-eslint/no-explicit-any
+  505:40  error    Unexpected any. Specify a different type                                                                                                         @typescript-eslint/no-explicit-any
+  549:40  error    Unexpected any. Specify a different type                                                                                                         @typescript-eslint/no-explicit-any
+  590:40  error    Unexpected any. Specify a different type                                                                                                         @typescript-eslint/no-explicit-any
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\pages\RoutineDetails.tsx
+   24:42  error    Unexpected any. Specify a different type                                                                                @typescript-eslint/no-explicit-any
+   27:76  error    Unexpected any. Specify a different type                                                                                @typescript-eslint/no-explicit-any
+   93:69  error    Unexpected any. Specify a different type                                                                                @typescript-eslint/no-explicit-any
+  107:44  error    Unexpected any. Specify a different type                                                                                @typescript-eslint/no-explicit-any
+  130:6   warning  React Hook useEffect has a missing dependency: 'fetchRoutineDetails'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  275:59  error    Unexpected any. Specify a different type                                                                                @typescript-eslint/no-explicit-any
+  286:30  error    Unexpected any. Specify a different type                                                                                @typescript-eslint/no-explicit-any
+  443:38  error    Unexpected any. Specify a different type                                                                                @typescript-eslint/no-explicit-any
+  518:68  error    Unexpected any. Specify a different type                                                                                @typescript-eslint/no-explicit-any
+  558:45  error    Unexpected any. Specify a different type                                                                                @typescript-eslint/no-explicit-any
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\pages\WorkoutSession.tsx
+  20:42  error    Unexpected any. Specify a different type                                                                                                          @typescript-eslint/no-explicit-any
+  21:46  error    Unexpected any. Specify a different type                                                                                                          @typescript-eslint/no-explicit-any
+  39:6   warning  React Hook useEffect has missing dependencies: 'fetchExistingWorkout' and 'fetchWorkoutData'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\src\pages\Workouts.tsx
+   30:58  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+   59:6   warning  React Hook useEffect has a missing dependency: 'fetchRoutines'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  100:34  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  142:43  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  184:83  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  212:39  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  436:37  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\supabase\functions\send-verification-email\index.ts
+  79:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nagve\OneDrive\Desktop\FreakBeast09\freakbeast\tailwind.config.ts
+  122:13  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+Γ£û 67 problems (44 errors, 23 warnings)
+

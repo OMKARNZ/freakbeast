@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import Layout from "@/components/Layout";
+import Layout from "@/components/layout/Layout";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Workouts from "@/pages/Workouts";
@@ -17,6 +17,9 @@ import RoutineDetails from "@/pages/RoutineDetails";
 import WorkoutSession from "@/pages/WorkoutSession";
 import VerificationSuccess from "@/pages/VerificationSuccess";
 import NotFound from "./pages/NotFound";
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,7 +34,7 @@ const queryClient = new QueryClient({
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -39,11 +42,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  
+
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
-  
+
   return <Layout>{children}</Layout>;
 };
 
@@ -57,6 +60,9 @@ const App = () => (
           {/* Index handles its own layout based on auth state */}
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="/verification-success" element={<VerificationSuccess />} />
           <Route path="/workouts" element={
             <ProtectedRoute>
